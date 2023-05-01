@@ -3,36 +3,30 @@ import 'package:sap/models/user_model.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
+import 'package:sap/utils/graphql_queries.dart';
 
 class UserProvider extends ChangeNotifier {
   UserModel? _user;
+  final GraphQLClient client;
+  final SharedPreferences prefs;
 
-  UserProvider({required this.client});
+  UserProvider({
+    required this.client,
+    required this.prefs,
+  });
 
   UserModel? get user => _user;
 
-  final GraphQLClient client;
-
   Future<void> init() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
     bool isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
     if (isLoggedIn) {
       String id = prefs.getString('userId') ?? '';
 
       final result = await client.query(
         QueryOptions(
-          document: gql(r'''
-                    query user($id: ID!) {
-                      user(id: $id) {
-                        _id
-                        name
-                        email
-                        isDoctor
-                      }
-                    }
-                  '''),
+          document: gql(GraphQLQueries.getUser),
           variables: {
-            'id': id,
+            'userId': id,
           },
         ),
       );
@@ -60,9 +54,8 @@ class UserProvider extends ChangeNotifier {
       isDoctor: isDoctor,
     );
 
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    prefs.setBool('isLoggedIn', true);
-    prefs.setString('userId', id);
+    await prefs.setBool('isLoggedIn', true);
+    await prefs.setString('userId', id);
 
     notifyListeners();
   }
@@ -70,9 +63,8 @@ class UserProvider extends ChangeNotifier {
   void logout() async {
     _user = null;
 
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    prefs.setBool('isLoggedIn', false);
-    prefs.remove('userId');
+    await prefs.setBool('isLoggedIn', false);
+    await prefs.remove('userId');
 
     notifyListeners();
   }
