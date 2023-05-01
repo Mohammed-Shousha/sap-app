@@ -1,25 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
-import 'package:sap/screens/start.dart';
 import 'package:sap/screens/welcome.dart';
-import 'package:sap/utils/dropdown.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
 import 'package:sap/screens/home.dart';
 import 'package:sap/providers/user_provider.dart';
-import 'package:sap/screens/medicine_position.dart';
+import 'package:sap/utils/palette.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await initHiveForFlutter();
 
-  Stripe.publishableKey =
-      "pk_test_51HVa76KSon2LsBHhXeMkqSJSSmE5ZDAejg6K0DmxFppRgFXJBeZcojemAUXZ2PrQvyRkynin3TS6GZ8iUCQJpiRu00IPu5tsoN";
-
   await dotenv.load(fileName: "assets/.env");
+
+  Stripe.publishableKey = dotenv.env['STRIPE_PUBLISHABLE_KEY']!;
 
   ValueNotifier<GraphQLClient> client = ValueNotifier(
     GraphQLClient(
@@ -39,15 +36,19 @@ void main() async {
     ChangeNotifierProvider(
       create: (context) => UserProvider(
         client: client.value,
+        prefs: prefs,
       ),
       child: GraphQLProvider(
         client: client,
         child: MaterialApp(
           title: 'SAP',
+          debugShowCheckedModeBanner: false,
           theme: ThemeData(
-            primarySwatch: Colors.green,
+            primarySwatch: Palette.primary,
+            fontFamily: 'Montserrat',
+            visualDensity: VisualDensity.adaptivePlatformDensity,
           ),
-          home: isLoggedIn ? const HomePage() : const MedicinePosition(),
+          home: isLoggedIn ? const HomeScreen() : const WelcomeScreen(),
         ),
       ),
     ),
