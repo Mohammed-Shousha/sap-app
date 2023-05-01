@@ -3,16 +3,20 @@ import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:sap/screens/home.dart';
 import 'package:provider/provider.dart';
 import 'package:sap/providers/user_provider.dart';
-import 'package:sap/utils/dropdown.dart';
+import 'package:sap/screens/medicine_position.dart';
+import 'package:sap/utils/graphql_mutations.dart';
+import 'package:sap/widgets/custom_button.dart';
+import 'package:sap/widgets/gradient_scaffold.dart';
+import 'package:sap/widgets/custom_text_field.dart';
 
-class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+class LoginScreen extends StatefulWidget {
+  const LoginScreen({super.key});
 
   @override
-  State<LoginPage> createState() => _LoginPageState();
+  State<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginPageState extends State<LoginPage> {
+class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
@@ -20,17 +24,23 @@ class _LoginPageState extends State<LoginPage> {
     final String email = _emailController.text.trim();
     final String password = _passwordController.text.trim();
 
+    //admin login
+    if (email == 'admin' && password == 'admin') {
+      if (context.mounted) {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(
+            builder: (BuildContext context) => const MedicinePosition(),
+          ),
+          (route) => false,
+        );
+      }
+      return;
+    }
+
     final result = await GraphQLProvider.of(context).value.mutate(
           MutationOptions(
-            document: gql(r'''
-              mutation LoginUser($email: String!, $password: String!) {
-                login(email: $email, password: $password) {
-                  _id
-                  name
-                  isDoctor
-                }
-              }
-            '''),
+            document: gql(GraphQLMutations.login),
             variables: {
               'email': email,
               'password': password,
@@ -68,7 +78,7 @@ class _LoginPageState extends State<LoginPage> {
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(
-            builder: (context) => const HomePage(),
+            builder: (context) => const HomeScreen(),
           ),
           (route) => false,
         );
@@ -78,41 +88,32 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return GradientScaffold(
       appBar: AppBar(
         title: const Text('Login'),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            TextField(
-              controller: _emailController,
-              keyboardType: TextInputType.emailAddress,
-              decoration: const InputDecoration(
-                labelText: 'Email',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 16.0),
-            TextField(
-              controller: _passwordController,
-              obscureText: true,
-              decoration: const InputDecoration(
-                labelText: 'Password',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 16.0),
-            ElevatedButton(
-              onPressed: () {
-                handleLogin();
-              },
-              child: const Text('Login'),
-            ),
-          ],
-        ),
+      body: Column(
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: [
+          CustomTextField(
+            controller: _emailController,
+            label: 'Email',
+            keyboardType: TextInputType.emailAddress,
+            // autofocus: true,
+          ),
+          const SizedBox(height: 16.0),
+          CustomTextField(
+            controller: _passwordController,
+            label: 'Password',
+            obscureText: true,
+            textInputAction: TextInputAction.done,
+          ),
+          const SizedBox(height: 32.0),
+          CustomButton(
+            onPressed: () => handleLogin(),
+            text: 'Login',
+          ),
+        ],
       ),
     );
   }

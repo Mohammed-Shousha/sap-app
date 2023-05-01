@@ -1,18 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:sap/screens/prescriptions.dart';
 import 'package:sap/screens/start.dart';
+import 'package:sap/widgets/gradient_scaffold.dart';
 import 'add_prescription.dart';
 import 'package:provider/provider.dart';
 import 'package:sap/providers/user_provider.dart';
+import 'package:sap/widgets/custom_list_tile.dart';
 
-class DoctorHomePage extends StatelessWidget {
-  const DoctorHomePage({super.key});
+class DoctorHomeScreen extends StatelessWidget {
+  const DoctorHomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     final userProvider = Provider.of<UserProvider>(context);
 
-    return Scaffold(
+    return GradientScaffold(
       appBar: AppBar(
         title: Text('Welcome, ${userProvider.user?.name}'),
         automaticallyImplyLeading: false,
@@ -20,48 +22,39 @@ class DoctorHomePage extends StatelessWidget {
       body: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Card(
-            child: ListTile(
-              leading: const Icon(Icons.add),
-              title: const Text('Create a new prescription'),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const AddPrescriptionForm(),
-                  ),
-                );
-              },
+          CustomListTile(
+            titleText: 'Create a new prescription',
+            leadingIcon: Icons.add,
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const AddPrescriptionForm(),
+              ),
             ),
           ),
-          Card(
-            child: ListTile(
-              leading: const Icon(Icons.history),
-              title: const Text('View prescription history'),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const PrescriptionsScreen(),
-                  ),
-                );
-              },
+          CustomListTile(
+            titleText: 'View prescription history',
+            leadingIcon: Icons.history,
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const PrescriptionsScreen(),
+              ),
             ),
           ),
-          Card(
-            child: ListTile(
-              leading: const Icon(Icons.logout),
-              title: const Text('Logout'),
-              onTap: () {
-                userProvider.logout();
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const StartScreen(),
-                  ),
-                );
-              },
-            ),
+          CustomListTile(
+            titleText: 'Logout',
+            leadingIcon: Icons.logout,
+            onTap: () => {
+              userProvider.logout(),
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const StartScreen(),
+                ),
+                (route) => false,
+              )
+            },
           ),
         ],
       ),

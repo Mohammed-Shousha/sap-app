@@ -4,6 +4,11 @@ import 'package:provider/provider.dart';
 import 'package:sap/providers/user_provider.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:logger/logger.dart';
+import 'package:sap/utils/graphql_mutations.dart';
+import 'package:sap/widgets/custom_button.dart';
+import 'package:sap/widgets/custom_text_field.dart';
+import 'package:sap/widgets/gradient_scaffold.dart';
+import 'package:sap/utils/graphql_queries.dart';
 
 class AddPrescriptionForm extends StatefulWidget {
   const AddPrescriptionForm({super.key});
@@ -14,7 +19,6 @@ class AddPrescriptionForm extends StatefulWidget {
 
 class _AddPrescriptionFormState extends State<AddPrescriptionForm> {
   final TextEditingController _patientNameController = TextEditingController();
-  // final TextEditingController _medicineController = TextEditingController();
   final TextEditingController _quantityController = TextEditingController();
   final TextEditingController _instructionsController = TextEditingController();
   String _patientId = '';
@@ -23,10 +27,13 @@ class _AddPrescriptionFormState extends State<AddPrescriptionForm> {
 
   String? selectedMedicineId;
   String? selectedMedicineName;
+  num? selectedMedicinePrice;
+
+  final _scrollController = ScrollController();
 
   Future<void> _scanQrCode() async {
     String barcodeScanRes = await FlutterBarcodeScanner.scanBarcode(
-      '#FF0000',
+      '#ff6666',
       'Cancel',
       true,
       ScanMode.QR,
@@ -34,14 +41,7 @@ class _AddPrescriptionFormState extends State<AddPrescriptionForm> {
 
     if (context.mounted) {
       final result = await GraphQLProvider.of(context).value.query(QueryOptions(
-            document: gql(r'''
-              query User($userId: ID!){
-                user(id: $userId) {
-                  _id
-                  name
-                }
-              }
-            '''),
+            document: gql(GraphQLQueries.getUser),
             variables: {
               'userId': barcodeScanRes,
             },
@@ -74,27 +74,36 @@ class _AddPrescriptionFormState extends State<AddPrescriptionForm> {
   }
 
   void _addMedication() {
-    // final medicine = _medicineController.text.trim();
     final medicineId = selectedMedicineId;
     final medicineName = selectedMedicineName;
     final quantity = _quantityController.text.trim();
     final instructions = _instructionsController.text.trim();
+    final price = selectedMedicinePrice;
 
     if (medicineId!.isNotEmpty && quantity.isNotEmpty) {
       final newMedication = {
         'medicineId': medicineId,
         'medicineName': medicineName,
         'quantity': quantity,
-        'instructions': instructions
+        'instructions': instructions,
+        'price': price,
       };
       setState(() {
         _medications.add(newMedication);
-        // _medicineController.clear();
-        selectedMedicineId = null;
         _quantityController.clear();
         _instructionsController.clear();
+        selectedMedicineId = null;
       });
     }
+  }
+
+  void scrollToEnd() {
+    _scrollController.animateTo(
+      _scrollController.position.maxScrollExtent +
+          80, // 80 is the height of the card
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOut,
+    );
   }
 
   void handleSubmit() async {
@@ -106,28 +115,13 @@ class _AddPrescriptionFormState extends State<AddPrescriptionForm> {
               'medicineName': medication['medicineName'],
               'quantity': int.parse(medication['quantity']),
               'doctorInstructions': medication['instructions'],
+              'price': medication['price'],
             })
         .toList();
 
     final result = await GraphQLProvider.of(context).value.mutate(
           MutationOptions(
-            document: gql(r'''
-              mutation AddPrescription($patientId: ID!, $doctorId: ID!, $medicines: [PrescriptionMedicineInput!]!){
-                addPrescription(patientId: $patientId, doctorId: $doctorId, medicines: $medicines) {
-                  _id
-                  patientId
-                  doctorId
-                  medicines {
-                    medicineId
-                    quantity
-                    doctorInstructions
-                  }
-                  date
-                  isPaid
-                  isRecived
-                }
-              }
-            '''),
+            document: gql(GraphQLMutations.addPrescription),
             variables: {
               'patientId': _patientId,
               'doctorId': doctorId,
@@ -159,7 +153,7 @@ class _AddPrescriptionFormState extends State<AddPrescriptionForm> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return GradientScaffold(
       appBar: AppBar(
         title: const Text('Add Prescription'),
       ),
@@ -168,30 +162,22 @@ class _AddPrescriptionFormState extends State<AddPrescriptionForm> {
           padding: const EdgeInsets.all(16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              ElevatedButton(
+              CustomButton(
+                text: 'Scan QR Code',
                 onPressed: _scanQrCode,
-                child: const Text('Scan QR Code'),
               ),
               const SizedBox(height: 16),
-              TextFormField(
+              CustomTextField(
                 controller: _patientNameController,
-                decoration: const InputDecoration(
-                  labelText: 'Patient ID',
-                ),
-                readOnly: true,
+                label: 'Patient Name',
+                enabled: false,
               ),
               const SizedBox(height: 16),
               Query(
                 options: QueryOptions(
-                  document: gql('''
-                    query Medicines{
-                      medicines {
-                        _id
-                        name
-                      }
-                    }
-                  '''),
+                  document: gql(GraphQLQueries.getMedicines),
                 ),
                 builder: (QueryResult result,
                     {Refetch? refetch, FetchMore? fetchMore}) {
@@ -199,11 +185,12 @@ class _AddPrescriptionFormState extends State<AddPrescriptionForm> {
                     return Text(result.exception.toString());
                   }
 
-                  // if (result.isLoading) {
-                  //   return const CircularProgressIndicator();
-                  // }
+                  if (result.isLoading) {
+                    return const CircularProgressIndicator();
+                  }
 
                   final medicinesOptions = result.data!['medicines'];
+                  Logger().i(medicinesOptions);
 
                   return DropdownButtonFormField(
                     value: selectedMedicineId,
@@ -211,7 +198,9 @@ class _AddPrescriptionFormState extends State<AddPrescriptionForm> {
                         .map<DropdownMenuItem<String>>((medicineOption) {
                       return DropdownMenuItem<String>(
                         value: medicineOption['_id'],
-                        child: Text(medicineOption['name']),
+                        child: Text(
+                          medicineOption['name'],
+                        ),
                       );
                     }).toList(),
                     onChanged: (value) {
@@ -220,63 +209,73 @@ class _AddPrescriptionFormState extends State<AddPrescriptionForm> {
                         selectedMedicineName = medicinesOptions.firstWhere(
                             (medicineOption) =>
                                 medicineOption['_id'] == value)['name'];
+                        selectedMedicinePrice = medicinesOptions.firstWhere(
+                            (medicineOption) =>
+                                medicineOption['_id'] == value)['price'];
+                        Logger().i(selectedMedicinePrice);
                       });
                     },
+                    style: const TextStyle(
+                      fontSize: 20.0,
+                      color: Colors.black87,
+                      fontFamily: 'Montserrat',
+                    ),
                     decoration: const InputDecoration(
                       labelText: 'Medicine',
-                      border: OutlineInputBorder(),
+                      labelStyle: TextStyle(fontSize: 20.0),
                     ),
                   );
                 },
               ),
               const SizedBox(height: 16),
-              TextFormField(
+              CustomTextField(
                 controller: _quantityController,
-                decoration: const InputDecoration(
-                  labelText: 'Quantity',
-                ),
+                label: 'Quantity',
                 keyboardType: TextInputType.number,
               ),
               const SizedBox(height: 16),
-              TextFormField(
+              CustomTextField(
+                label: 'Instructions',
                 controller: _instructionsController,
-                decoration: const InputDecoration(
-                  labelText: 'Instructions',
+              ),
+              const SizedBox(height: 16),
+              CustomButton(
+                onPressed: () => {
+                  _addMedication(),
+                  scrollToEnd(),
+                },
+                text: 'Add Medication',
+              ),
+              const SizedBox(height: 16),
+              if (_medications.isNotEmpty)
+                SizedBox(
+                  height: _medications.length == 1 ? 80.0 : 160.0,
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    padding: const EdgeInsets.only(top: 0),
+                    controller: _scrollController,
+                    itemCount: _medications.length,
+                    itemBuilder: (context, index) {
+                      final medication = _medications[index];
+                      return Card(
+                        child: ListTile(
+                          title: Text(medication['medicineName']),
+                          subtitle: Text(medication['quantity']),
+                          trailing: IconButton(
+                            icon: const Icon(Icons.delete),
+                            onPressed: () => setState(() {
+                              _medications.removeAt(index);
+                            }),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
                 ),
-              ),
               const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: _addMedication,
-                child: const Text('Add Medication'),
-              ),
-              const SizedBox(height: 16),
-              ListView.builder(
-                shrinkWrap: true,
-                itemCount: _medications.length,
-                itemBuilder: (context, index) {
-                  final medication = _medications[index];
-                  return Card(
-                    child: ListTile(
-                      title: Text(medication['medicineName']),
-                      subtitle: Text(medication['quantity']),
-                      trailing: IconButton(
-                        onPressed: () {
-                          setState(() {
-                            _medications.removeAt(index);
-                          });
-                        },
-                        icon: const Icon(Icons.delete),
-                      ),
-                    ),
-                  );
-                },
-              ),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () {
-                  handleSubmit();
-                },
-                child: const Text('Submit'),
+              CustomButton(
+                text: 'Submit',
+                onPressed: () => handleSubmit(),
               ),
             ],
           ),

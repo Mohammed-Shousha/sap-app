@@ -4,14 +4,14 @@ import 'package:sap/screens/home_user.dart';
 import 'package:provider/provider.dart';
 import 'package:sap/providers/user_provider.dart';
 
-class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
 
   @override
-  State<HomePage> createState() => _HomePageState();
+  State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
@@ -35,9 +35,9 @@ class _HomePageState extends State<HomePage> {
     }
 
     if (userProvider.user!.isDoctor) {
-      return const DoctorHomePage();
+      return const DoctorHomeScreen();
     } else {
-      return const UserHomePage();
+      return const UserHomeScreen();
     }
   }
 }

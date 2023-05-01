@@ -3,15 +3,19 @@ import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:sap/providers/user_provider.dart';
 import 'package:sap/screens/home.dart';
+import 'package:sap/utils/graphql_mutations.dart';
+import 'package:sap/widgets/custom_button.dart';
+import 'package:sap/widgets/custom_text_field.dart';
+import 'package:sap/widgets/gradient_scaffold.dart';
 
-class RegisterPage extends StatefulWidget {
-  const RegisterPage({super.key});
+class RegisterScreen extends StatefulWidget {
+  const RegisterScreen({super.key});
 
   @override
-  State<RegisterPage> createState() => _RegisterPageState();
+  State<RegisterScreen> createState() => _RegisterScreenState();
 }
 
-class _RegisterPageState extends State<RegisterPage> {
+class _RegisterScreenState extends State<RegisterScreen> {
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -28,15 +32,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
     final result = await GraphQLProvider.of(context).value.mutate(
           MutationOptions(
-            document: gql(r'''
-                  mutation RegisterUser($name: String!, $email: String!, $password: String!) {
-                    registerUser(name: $name, email: $email, password: $password) {
-                      _id
-                      name
-                      isDoctor
-                    }
-                  }
-                '''),
+            document: gql(GraphQLMutations.registerUser),
             variables: {
               'name': name,
               'email': email,
@@ -75,7 +71,7 @@ class _RegisterPageState extends State<RegisterPage> {
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(
-            builder: (context) => const HomePage(),
+            builder: (context) => const HomeScreen(),
           ),
           (route) => false,
         );
@@ -85,50 +81,36 @@ class _RegisterPageState extends State<RegisterPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return GradientScaffold(
       appBar: AppBar(
         title: const Text('Register'),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            TextField(
-              controller: _nameController,
-              keyboardType: TextInputType.name,
-              decoration: const InputDecoration(
-                labelText: 'Name',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 16.0),
-            TextField(
-              controller: _emailController,
-              keyboardType: TextInputType.emailAddress,
-              decoration: const InputDecoration(
-                labelText: 'Email',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 16.0),
-            TextField(
-              controller: _passwordController,
-              obscureText: true,
-              decoration: const InputDecoration(
-                labelText: 'Password',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 16.0),
-            ElevatedButton(
-              onPressed: () {
-                handleRegister();
-              },
-              child: const Text('Register'),
-            ),
-          ],
-        ),
+      body: Column(
+        children: [
+          CustomTextField(
+            controller: _nameController,
+            label: 'Name',
+            keyboardType: TextInputType.name,
+          ),
+          const SizedBox(height: 16.0),
+          CustomTextField(
+            controller: _emailController,
+            keyboardType: TextInputType.emailAddress,
+            label: 'Email',
+          ),
+          const SizedBox(height: 16.0),
+          CustomTextField(
+            controller: _passwordController,
+            label: 'Password',
+            obscureText: true,
+            textInputAction: TextInputAction.done,
+          ),
+          const SizedBox(height: 16.0),
+          CustomButton(
+            onPressed: () => handleRegister(),
+            text: 'Register',
+          ),
+        ],
       ),
     );
   }

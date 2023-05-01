@@ -1,14 +1,38 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:sap/screens/start.dart';
+import 'package:sap/utils/palette.dart';
+import 'package:sap/widgets/gradient_scaffold.dart';
+import 'package:sap/widgets/custom_button.dart';
 
-class WelcomePage extends StatefulWidget {
-  const WelcomePage({super.key});
+final List<Map<String, dynamic>> welcomeData = [
+  {
+    'message': 'Welcome to SAP app!',
+    'subMessage': 'We are happy to have you here!',
+    'image': 'assets/images/welcome.svg',
+  },
+  {
+    'message': 'Learn more about us!',
+    'subMessage':
+        'SAP is designed to make getting your medications easy and convenient.',
+    'image': 'assets/images/medicine.svg',
+  },
+  {
+    'message': 'What are you waiting for?',
+    'subMessage': '',
+    'image': 'assets/images/start.svg',
+    'isLastPage': true,
+  },
+];
+
+class WelcomeScreen extends StatefulWidget {
+  const WelcomeScreen({super.key});
 
   @override
-  State<WelcomePage> createState() => _WelcomePageState();
+  State<WelcomeScreen> createState() => _WelcomeScreenState();
 }
 
-class _WelcomePageState extends State<WelcomePage>
+class _WelcomeScreenState extends State<WelcomeScreen>
     with SingleTickerProviderStateMixin {
   late final TabController _controller;
 
@@ -16,7 +40,7 @@ class _WelcomePageState extends State<WelcomePage>
   void initState() {
     super.initState();
     _controller = TabController(
-      length: 3,
+      length: welcomeData.length,
       vsync: this,
     );
   }
@@ -27,90 +51,93 @@ class _WelcomePageState extends State<WelcomePage>
     _controller.dispose();
   }
 
-  void _incrementCounter() {
-    setState(() {
-      (_controller.index == 3 - 1)
-          ? _controller.index = 0
-          : _controller.index++;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return GradientScaffold(
       appBar: AppBar(
-        title: const Text('Welcome to our App'),
+        title: const Text('Welcome to SAP'),
         centerTitle: true,
       ),
-      body: Column(
-        children: [
-          Expanded(
-            child: TabBarView(
-              controller: _controller,
-              children: const [
-                WelcomeScreen(
-                  message: 'Welcome to our app!',
-                  color: Colors.blueGrey,
-                ),
-                WelcomeScreen(
-                  message: 'Learn more about us!',
-                  color: Colors.orange,
-                ),
-                WelcomeScreen(
-                  message: 'Get started now!',
-                  color: Colors.green,
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 20),
-          TabPageSelector(
+      body: Column(children: [
+        Expanded(
+          child: TabBarView(
+            physics: const BouncingScrollPhysics(),
             controller: _controller,
-            color: Colors.grey,
-            selectedColor: Colors.green,
-            borderStyle: BorderStyle.none,
+            children: [
+              for (final data in welcomeData)
+                WelcomeWidget(
+                  message: data['message'],
+                  image: data['image'],
+                  subMessage: data['subMessage'],
+                  isLastPage: data['isLastPage'] ?? false,
+                ),
+            ],
           ),
-          const SizedBox(height: 20),
-          ElevatedButton(
-            onPressed: () {
-              _controller.index == 2
-                  ? Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const StartScreen(),
-                      ))
-                  : _incrementCounter();
-            },
-            child: Text(_controller.index == 2 ? 'Get started' : 'Next'),
-          ),
-          const SizedBox(height: 20),
-        ],
-      ),
+        ),
+        const SizedBox(height: 20),
+        TabPageSelector(
+          controller: _controller,
+          color: Colors.grey,
+          selectedColor: Palette.primary,
+          borderStyle: BorderStyle.none,
+        ),
+        const SizedBox(height: 20),
+      ]),
     );
   }
 }
 
-class WelcomeScreen extends StatelessWidget {
+class WelcomeWidget extends StatelessWidget {
   final String message;
-  final Color color;
+  final String image;
+  final String subMessage;
+  final bool isLastPage;
 
-  const WelcomeScreen({
+  const WelcomeWidget({
     Key? key,
     required this.message,
-    required this.color,
+    required this.image,
+    required this.subMessage,
+    this.isLastPage = false,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Text(
-        message,
-        style: const TextStyle(
-          fontSize: 24,
-          fontWeight: FontWeight.bold,
-          color: Colors.green,
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        SvgPicture.asset(
+          image,
+          width: 300,
+          height: 300,
         ),
-      ),
+        const SizedBox(height: 20),
+        Text(
+          message,
+          style: const TextStyle(
+            fontSize: 24,
+          ),
+        ),
+        const SizedBox(height: 20),
+        Text(
+          subMessage,
+          style: const TextStyle(
+            fontSize: 18,
+          ),
+        ),
+        const SizedBox(height: 20),
+        if (isLastPage)
+          CustomButton(
+            text: 'Get Started',
+            onPressed: () => Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const StartScreen(),
+              ),
+            ),
+          ),
+      ],
     );
   }
 }

@@ -3,6 +3,11 @@ import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:logger/logger.dart';
 import 'package:sap/models/medicine_model.dart';
+import 'package:sap/utils/graphql_queries.dart';
+import 'package:sap/utils/palette.dart';
+import 'package:sap/widgets/custom_button.dart';
+import 'package:sap/widgets/gradient_scaffold.dart';
+import 'package:sap/screens/start.dart';
 
 class MedicinePosition extends StatefulWidget {
   const MedicinePosition({Key? key}) : super(key: key);
@@ -13,6 +18,7 @@ class MedicinePosition extends StatefulWidget {
 
 class _MedicinePositionState extends State<MedicinePosition> {
   MedicineModel? _medicine;
+  final int _axisCount = 4;
 
   Future<void> _scanBarcode() async {
     String barcodeScanRes = await FlutterBarcodeScanner.scanBarcode(
@@ -21,27 +27,13 @@ class _MedicinePositionState extends State<MedicinePosition> {
       true,
       ScanMode.BARCODE,
     );
+    Logger().i(barcodeScanRes);
 
-    // barcodeScanRes = '6419d62f92a9b740d70e70be';
-
-    // Logger().i(barcodeScanRes);
+    barcodeScanRes = '6419d62f92a9b740d70e70be';
 
     if (context.mounted) {
       final result = await GraphQLProvider.of(context).value.query(QueryOptions(
-            document: gql(r'''
-              query MedicineById($medicineId: ID!){
-                medicineById(id: $medicineId) {
-                  _id
-                  name
-                  availableQuantity
-                  otc
-                  position {
-                    row
-                    col
-                  }
-                }
-              }
-            '''),
+            document: gql(GraphQLQueries.getMedicine),
             variables: {
               'medicineId': barcodeScanRes,
             },
@@ -76,49 +68,61 @@ class _MedicinePositionState extends State<MedicinePosition> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return GradientScaffold(
       appBar: AppBar(
         title: const Text('Barcode Scanner'),
+        actions: [
+          IconButton(
+            onPressed: () => Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const StartScreen(),
+              ),
+              (route) => false,
+            ),
+            icon: const Icon(Icons.logout),
+          ),
+        ],
       ),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            ElevatedButton(
-              onPressed: _scanBarcode,
-              child: const Text('Scan Barcode'),
-            ),
-            const SizedBox(height: 16),
             _medicine == null
                 ? const SizedBox.shrink()
                 : Expanded(
                     child: Column(
                       children: [
+                        const SizedBox(height: 16),
                         Text(
-                          'Scanned Barcode: ${_medicine?.name}',
+                          'Scanned Medicine: ${_medicine?.name}',
                           style: const TextStyle(fontSize: 18),
                         ),
+                        const SizedBox(height: 16),
+                        const Text("Add the medicine to the position"),
                         Expanded(
                           child: GridView.count(
-                            crossAxisCount: 4,
-                            children: List.generate(16, (index) {
-                              final row = index ~/ 4;
-                              final col = index % 4;
+                            padding: const EdgeInsets.only(top: 10),
+                            crossAxisCount: _axisCount,
+                            children:
+                                List.generate(_axisCount * _axisCount, (index) {
+                              final row = index ~/ _axisCount;
+                              final col = index % _axisCount;
                               return GridTile(
                                 child: Container(
                                   decoration: BoxDecoration(
-                                    border: Border.all(),
-                                    color:
-                                        row == _medicine?.position['row'] - 1 &&
-                                                col ==
-                                                    _medicine?.position['col'] -
-                                                        1
-                                            ? Colors.green
-                                            : Colors.transparent,
+                                    border: Border.all(
+                                      color: Palette.primary,
+                                    ),
+                                    color: row == _medicine?.position['row'] &&
+                                            col == _medicine?.position['col']
+                                        ? Palette.primary
+                                        : Colors.transparent,
                                   ),
                                   child: Center(
                                       child: Text(
-                                    '${row + 1}${col + 1}',
+                                    '$row, $col',
                                     style: const TextStyle(fontSize: 18),
                                   )),
                                 ),
@@ -128,7 +132,12 @@ class _MedicinePositionState extends State<MedicinePosition> {
                         ),
                       ],
                     ),
-                  )
+                  ),
+            CustomButton(
+              onPressed: _scanBarcode,
+              text: 'Scan Barcode',
+            ),
+            const SizedBox(height: 16),
           ],
         ),
       ),

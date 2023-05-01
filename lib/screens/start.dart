@@ -1,50 +1,53 @@
 import 'package:flutter/material.dart';
-import 'login.dart';
-import 'register.dart';
-import 'register_doctor.dart';
+import 'package:sap/screens/login.dart';
+import 'package:sap/screens/register.dart';
+import 'package:sap/screens/register_doctor.dart';
+import 'package:sap/widgets/custom_button.dart';
+import 'package:sap/widgets/gradient_scaffold.dart';
 
 class StartScreen extends StatelessWidget {
   const StartScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return GradientScaffold(
       appBar: AppBar(
-        title: const Text('Welcome'),
+        title: const Text('Start'),
       ),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const LoginPage()),
-                );
-              },
-              child: const Text('Login'),
-            ),
-            const SizedBox(height: 16.0),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const RegisterPage()),
-                );
-              },
-              child: const Text('Register'),
-            ),
-            const SizedBox(height: 16.0),
-            ElevatedButton(
-              onPressed: () {
+            CustomButton(
+              text: 'Log in',
+              onPressed: () => {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                      builder: (context) => const RegisterDoctorPage()),
-                );
+                    builder: (context) => const LoginScreen(),
+                  ),
+                )
               },
-              child: const Text('Register as Doctor'),
+            ),
+            const SizedBox(height: 20.0),
+            CustomButton(
+              text: 'Register',
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const RegisterScreen(),
+                ),
+              ),
+            ),
+            const SizedBox(height: 20.0),
+            CustomButton(
+              text: 'Register as Doctor',
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const RegisterDoctorScreen(),
+                ),
+              ),
             ),
           ],
         ),

@@ -3,15 +3,19 @@ import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:sap/screens/home_doctor.dart';
 import 'package:provider/provider.dart';
 import 'package:sap/providers/user_provider.dart';
+import 'package:sap/utils/graphql_mutations.dart';
+import 'package:sap/widgets/custom_button.dart';
+import 'package:sap/widgets/custom_text_field.dart';
+import 'package:sap/widgets/gradient_scaffold.dart';
 
-class RegisterDoctorPage extends StatefulWidget {
-  const RegisterDoctorPage({super.key});
+class RegisterDoctorScreen extends StatefulWidget {
+  const RegisterDoctorScreen({super.key});
 
   @override
-  State<RegisterDoctorPage> createState() => _RegisterDoctorPageState();
+  State<RegisterDoctorScreen> createState() => _RegisterDoctorScreenState();
 }
 
-class _RegisterDoctorPageState extends State<RegisterDoctorPage> {
+class _RegisterDoctorScreenState extends State<RegisterDoctorScreen> {
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -25,15 +29,7 @@ class _RegisterDoctorPageState extends State<RegisterDoctorPage> {
 
     final result = await GraphQLProvider.of(context).value.mutate(
           MutationOptions(
-            document: gql(r'''
-                  mutation RegisterDoctor($name: String!, $email: String!, $password: String!, $licenseNumber: String!) {
-                    registerDoctor(name: $name, email: $email, password: $password, licenseNumber: $licenseNumber) {
-                      _id
-                      name
-                      isDoctor
-                    }
-                  }
-                '''),
+            document: gql(GraphQLMutations.registerDoctor),
             variables: {
               'name': name,
               'email': email,
@@ -76,7 +72,7 @@ class _RegisterDoctorPageState extends State<RegisterDoctorPage> {
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(
-            builder: (context) => const DoctorHomePage(),
+            builder: (context) => const DoctorHomeScreen(),
           ),
           (route) => false,
         );
@@ -86,58 +82,43 @@ class _RegisterDoctorPageState extends State<RegisterDoctorPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return GradientScaffold(
       appBar: AppBar(
         title: const Text('Register Doctor'),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            TextField(
-              controller: _nameController,
-              keyboardType: TextInputType.name,
-              decoration: const InputDecoration(
-                labelText: 'Name',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 16.0),
-            TextField(
-              controller: _emailController,
-              keyboardType: TextInputType.emailAddress,
-              decoration: const InputDecoration(
-                labelText: 'Email',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 16.0),
-            TextField(
-              controller: _licenseController,
-              decoration: const InputDecoration(
-                labelText: 'License Number',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 16.0),
-            TextField(
-              controller: _passwordController,
-              obscureText: true,
-              decoration: const InputDecoration(
-                labelText: 'Password',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 16.0),
-            ElevatedButton(
-              onPressed: () {
-                handleRegister();
-              },
-              child: const Text('Register'),
-            ),
-          ],
-        ),
+      body: Column(
+        children: [
+          CustomTextField(
+            controller: _nameController,
+            label: 'Name',
+            keyboardType: TextInputType.name,
+          ),
+          const SizedBox(height: 16.0),
+          CustomTextField(
+            controller: _emailController,
+            label: 'Email',
+            keyboardType: TextInputType.emailAddress,
+          ),
+          const SizedBox(height: 16.0),
+          CustomTextField(
+            controller: _licenseController,
+            label: 'License Number',
+            keyboardType: TextInputType.number,
+          ),
+          const SizedBox(height: 16.0),
+          CustomTextField(
+            controller: _passwordController,
+            label: 'Password',
+            obscureText: true,
+          ),
+          const SizedBox(height: 16.0),
+          CustomButton(
+            onPressed: () {
+              handleRegister();
+            },
+            text: 'Register',
+          ),
+        ],
       ),
     );
   }
