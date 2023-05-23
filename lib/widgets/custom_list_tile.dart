@@ -9,13 +9,13 @@ class CustomListTile extends StatelessWidget {
   final VoidCallback onTap;
 
   const CustomListTile({
-    Key? key,
+    super.key,
     required this.titleText,
     this.subtitleText = '',
     this.leadingIcon,
     this.trailingIcon,
     required this.onTap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

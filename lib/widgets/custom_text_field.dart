@@ -12,7 +12,7 @@ class CustomTextField extends StatelessWidget {
   final FormFieldValidator<String>? validator;
 
   const CustomTextField({
-    Key? key,
+    super.key,
     required this.label,
     this.controller,
     this.obscureText = false,
@@ -22,7 +22,7 @@ class CustomTextField extends StatelessWidget {
     this.textInputAction = TextInputAction.next,
     this.onSubmitted,
     this.validator,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -37,28 +37,13 @@ class CustomTextField extends StatelessWidget {
       validator: validator,
       style: const TextStyle(
         fontSize: 20.0,
-        // color: Colors.white,
       ),
       decoration: InputDecoration(
-        // focusedBorder: const UnderlineInputBorder(
-        //   borderSide: BorderSide(
-        //     width: 4.0,
-        //     // color: Colors.white,
-        //   ),
-        // ),
-        // enabledBorder: const UnderlineInputBorder(
-        //   borderSide: BorderSide(
-        //       // width: 2.0,
-        //       ),
-        // ),
         labelText: label,
         labelStyle: const TextStyle(
           fontSize: 20.0,
-          // color: Colors.white,
-          // decorationColor: Colors.red,
         ),
       ),
-      // ),
     );
   }
 }

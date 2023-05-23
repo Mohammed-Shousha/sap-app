@@ -5,19 +5,19 @@ class GradientScaffold extends StatelessWidget {
   final List<Color> colors;
   final AlignmentGeometry begin;
   final AlignmentGeometry end;
-  final AppBar appBar;
+  final AppBar? appBar;
 
   const GradientScaffold({
-    Key? key,
+    super.key,
     required this.body,
-    required this.appBar,
+    this.appBar,
     this.colors = const [
       Color(0xff3bbdb1),
       Color(0xFFEFEFEF),
     ],
     this.begin = Alignment.topCenter,
     this.end = Alignment.bottomCenter,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -39,8 +39,8 @@ class GradientScaffold extends StatelessWidget {
           appBar: AppBar(
             backgroundColor: Colors.transparent,
             elevation: 0,
-            title: appBar.title,
-            actions: appBar.actions,
+            title: appBar?.title,
+            actions: appBar?.actions,
           ),
           backgroundColor: Colors.transparent,
           body: Padding(
