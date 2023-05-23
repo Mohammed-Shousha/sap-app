@@ -3,7 +3,6 @@ import 'package:sap/screens/home_doctor.dart';
 import 'package:sap/screens/home_user.dart';
 import 'package:provider/provider.dart';
 import 'package:sap/providers/user_provider.dart';
-import 'package:sap/widgets/gradient_scaffold.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -28,7 +27,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final userProvider = Provider.of<UserProvider>(context);
 
     if (userProvider.user == null) {
-      return const GradientScaffold(
+      return const Scaffold(
         body: Center(
           child: CircularProgressIndicator(),
         ),

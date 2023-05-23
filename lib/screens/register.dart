@@ -3,12 +3,10 @@ import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:sap/providers/user_provider.dart';
 import 'package:sap/screens/home.dart';
-import 'package:sap/utils/dialogs/error_dialog.dart';
 import 'package:sap/utils/graphql_mutations.dart';
 import 'package:sap/widgets/custom_button.dart';
 import 'package:sap/widgets/custom_text_field.dart';
 import 'package:sap/widgets/gradient_scaffold.dart';
-import 'package:sap/models/user_model.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -22,11 +20,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
-  // TODO: email and password validation
-  // bool isValidPassword(String password) {
-  //   RegExp regex = RegExp(r'^(?=.*?[a-zA-Z])(?=.*?[0-9]).{8,}$');
-  //   return regex.hasMatch(password);
-  // }
+  bool isValidPassword(String password) {
+    RegExp regex = RegExp(r'^(?=.*?[a-zA-Z])(?=.*?[0-9]).{8,}$');
+    return regex.hasMatch(password);
+  }
 
   void handleRegister() async {
     final String name = _nameController.text.trim();
@@ -43,16 +40,33 @@ class _RegisterScreenState extends State<RegisterScreen> {
             },
           ),
         );
-    if (result.hasException && mounted) {
-      showErrorDialog(context, result.exception!.graphqlErrors.first.message);
+    if (result.hasException) {
+      if (context.mounted) {
+        showDialog(
+          context: context,
+          builder: (BuildContext context) => AlertDialog(
+            title: const Text('Register Error'),
+            content: const Text('User already exists'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
+      }
     } else {
-      UserModel user = UserModel.fromJson(result.data!['registerUser']);
+      final Map<String, dynamic> userData = result.data!['registerUser'];
+      final String userId = userData['_id'];
+      final String userName = userData['name'];
+      final bool isDoctor = userData['isDoctor'];
 
-      if (mounted) {
+      if (context.mounted) {
         final UserProvider userProvider =
             Provider.of<UserProvider>(context, listen: false);
 
-        userProvider.login(user);
+        userProvider.login(userId, userName, email, isDoctor);
 
         Navigator.pushAndRemoveUntil(
           context,
@@ -74,27 +88,27 @@ class _RegisterScreenState extends State<RegisterScreen> {
       body: Column(
         children: [
           CustomTextField(
-            label: 'Name',
             controller: _nameController,
+            label: 'Name',
             keyboardType: TextInputType.name,
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 16.0),
           CustomTextField(
-            label: 'Email',
             controller: _emailController,
             keyboardType: TextInputType.emailAddress,
+            label: 'Email',
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 16.0),
           CustomTextField(
-            label: 'Password',
             controller: _passwordController,
+            label: 'Password',
             obscureText: true,
             textInputAction: TextInputAction.done,
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: 16.0),
           CustomButton(
+            onPressed: () => handleRegister(),
             text: 'Register',
-            onPressed: handleRegister,
           ),
         ],
       ),
