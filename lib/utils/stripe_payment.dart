@@ -1,8 +1,39 @@
 import 'dart:convert';
+import 'package:flutter/material.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
+import 'package:sap/utils/constants.dart';
+import 'package:sap/utils/palette.dart';
 import 'package:http/http.dart' as http;
 
 Map<String, dynamic>? paymentIntent;
+
+PaymentSheetAppearance paymentSheetAppearance = const PaymentSheetAppearance(
+  colors: PaymentSheetAppearanceColors(
+    background: Palette.primary,
+    primary: Color(0xFFEFEFEF),
+    primaryText: Color(0xFFEFEFEF),
+    secondaryText: Color(0xFFEFEFEF),
+    componentText: Color(0xFF121212),
+    placeholderText: Color(0xFF121212),
+    componentBackground: Color(0xFFEFEFEF),
+  ),
+  shapes: PaymentSheetShape(
+    borderRadius: 16,
+  ),
+  primaryButton: PaymentSheetPrimaryButtonAppearance(
+    shapes: PaymentSheetPrimaryButtonShape(blurRadius: 16),
+    colors: PaymentSheetPrimaryButtonTheme(
+      dark: PaymentSheetPrimaryButtonThemeColors(
+        background: Color(0xFFEFEFEF),
+        text: Palette.primary,
+      ),
+      light: PaymentSheetPrimaryButtonThemeColors(
+        background: Color(0xFFEFEFEF),
+        text: Palette.primary,
+      ),
+    ),
+  ),
+);
 
 Future<bool> makePayment(num amount, String prescriptionId) async {
   paymentIntent = await createPaymentIntent(amount);
@@ -11,6 +42,7 @@ Future<bool> makePayment(num amount, String prescriptionId) async {
     paymentSheetParameters: SetupPaymentSheetParameters(
       paymentIntentClientSecret: paymentIntent!['paymentIntent'],
       merchantDisplayName: 'SAP',
+      appearance: paymentSheetAppearance,
     ),
   );
 
@@ -22,7 +54,7 @@ Future<bool> makePayment(num amount, String prescriptionId) async {
 Future<Map<String, dynamic>> createPaymentIntent(num amount) async {
   try {
     var response = await http.post(
-      Uri.parse('http://192.168.1.18:4040/payment-sheet'),
+      Uri.parse('${Constants.baseUrl}/payment-sheet'),
       headers: {
         'Content-Type': 'application/json',
       },
@@ -40,7 +72,7 @@ Future<void> displayPaymentSheet(String prescriptionId) async {
   try {
     await Stripe.instance.presentPaymentSheet().then((value) async {
       var response = await http.put(
-        Uri.parse('http://192.168.1.18:4040/mark-prescription-paid'),
+        Uri.parse('${Constants.baseUrl}/mark-prescription-paid'),
         headers: {
           'Content-Type': 'application/json',
         },
