@@ -22,12 +22,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
-  // TODO: email and password validation
-  // bool isValidPassword(String password) {
-  //   RegExp regex = RegExp(r'^(?=.*?[a-zA-Z])(?=.*?[0-9]).{8,}$');
-  //   return regex.hasMatch(password);
-  // }
-
   void handleRegister() async {
     final String name = _nameController.text.trim();
     final String email = _emailController.text.trim();

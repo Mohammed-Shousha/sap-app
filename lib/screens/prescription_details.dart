@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:sap/models/prescription_model.dart';
 import 'package:sap/utils/dialogs/error_dialog.dart';
+import 'package:sap/utils/dialogs/success_dialog.dart';
 import 'package:sap/utils/format_datetime.dart';
 import 'package:sap/screens/qr.dart';
 import 'package:sap/utils/palette.dart';
@@ -29,12 +30,40 @@ class PrescriptionDetailsScreen extends StatefulWidget {
 class _PrescriptionDetailsScreenState extends State<PrescriptionDetailsScreen> {
   bool _paymentCompleted = false;
   bool _alreadyReceived = false;
+  bool _isProcessing = false;
 
   num calculatePrescriptionTotal(PrescriptionModel prescription) {
-    final List<num> prices = prescription.medicines
+    final List<num> prices = prescription.medicines!
         .map((medicine) => medicine.price * medicine.quantity)
         .toList();
     return prices.reduce((total, price) => total + price);
+  }
+
+  Future<void> _completePayment(
+    num prescriptionTotal,
+    String prescriptionId,
+  ) async {
+    setState(() {
+      _isProcessing = true;
+    });
+
+    bool ispaymentCompleted = false;
+    try {
+      ispaymentCompleted = await makePayment(prescriptionTotal, prescriptionId);
+    } catch (e) {
+      if (mounted) showErrorDialog(context, 'Payment failed');
+    }
+
+    setState(() {
+      _isProcessing = false;
+    });
+
+    if (ispaymentCompleted) {
+      if (mounted) showSuccessDialog(context, 'Payment completed!');
+      setState(() {
+        _paymentCompleted = true;
+      });
+    }
   }
 
   @override
@@ -94,7 +123,7 @@ class _PrescriptionDetailsScreenState extends State<PrescriptionDetailsScreen> {
 
           final prescriptionTotal = calculatePrescriptionTotal(prescription);
 
-          if (prescription.isReceived) _alreadyReceived = true;
+          if (prescription.isReceived!) _alreadyReceived = true;
 
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -126,13 +155,13 @@ class _PrescriptionDetailsScreenState extends State<PrescriptionDetailsScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                'Received: ${prescription.isReceived ? 'Yes' : 'No'}',
+                'Received: ${prescription.isReceived! ? 'Yes' : 'No'}',
                 style: const TextStyle(fontSize: 16),
               ),
               const SizedBox(height: 8),
               widget.isPatientPrescription
                   ? Text(
-                      'Paid: ${prescription.isPaid || _paymentCompleted ? 'Yes' : 'No'}',
+                      'Paid: ${prescription.isPaid! || _paymentCompleted ? 'Yes' : 'No'}',
                       style: const TextStyle(fontSize: 16),
                     )
                   : const SizedBox(),
@@ -148,9 +177,10 @@ class _PrescriptionDetailsScreenState extends State<PrescriptionDetailsScreen> {
                 shrinkWrap: true,
                 padding: const EdgeInsets.all(0),
                 physics: const NeverScrollableScrollPhysics(),
-                itemCount: prescription.medicines.length,
+                itemCount: prescription.medicines!.length,
                 itemBuilder: (context, index) {
-                  final medicine = prescription.medicines[index];
+                  final medicine = prescription.medicines![index];
+
                   return Card(
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
@@ -199,7 +229,7 @@ class _PrescriptionDetailsScreenState extends State<PrescriptionDetailsScreen> {
               const SizedBox(height: 24),
               widget.isPatientPrescription &&
                       !_paymentCompleted &&
-                      !prescription.isPaid
+                      !prescription.isPaid!
                   ? Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
@@ -214,16 +244,12 @@ class _PrescriptionDetailsScreenState extends State<PrescriptionDetailsScreen> {
                         CustomButton(
                           text: "Pay",
                           onPressed: () async {
-                            final ispaymentCompleted = await makePayment(
-                              prescriptionTotal,
-                              widget.prescriptionId,
-                            );
-
-                            if (ispaymentCompleted) {
-                              setState(() {
-                                _paymentCompleted = true;
-                              });
-                            }
+                            _isProcessing
+                                ? null
+                                : await _completePayment(
+                                    prescriptionTotal,
+                                    widget.prescriptionId,
+                                  );
                           },
                         ),
                       ],
