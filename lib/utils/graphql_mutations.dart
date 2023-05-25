@@ -4,6 +4,7 @@ class GraphQLMutations {
       login(email: $email, password: $password) {
         _id
         name
+        email
         isDoctor
       }
     }
@@ -14,6 +15,7 @@ class GraphQLMutations {
       registerUser(name: $name, email: $email, password: $password) {
         _id
         name
+        email
         isDoctor
       }
     }
@@ -24,6 +26,7 @@ class GraphQLMutations {
       registerDoctor(name: $name, email: $email, password: $password, licenseNumber: $licenseNumber) {
         _id
         name
+        email
         isDoctor
       }
     }
@@ -31,20 +34,13 @@ class GraphQLMutations {
 
   static const String addPrescription = r'''
     mutation AddPrescription($patientId: ID!, $doctorId: ID!, $medicines: [PrescriptionMedicineInput!]!){
-      addPrescription(patientId: $patientId, doctorId: $doctorId, medicines: $medicines) {
-        _id
-        patientId
-        doctorId
-        medicines {
-          medicineId
-          quantity
-          doctorInstructions
-          price
-        }
-        date
-        isPaid
-        isRecived
-      }
+      addPrescription(patientId: $patientId, doctorId: $doctorId, medicines: $medicines)
+    }
+  ''';
+
+  static const String updateMedicine = r'''
+    mutation UpdateMedicine($medicineId: ID!, $addedQuantity: Int!){
+      updateMedicine(id: $medicineId, addedQuantity: $addedQuantity) 
     }
   ''';
 }
