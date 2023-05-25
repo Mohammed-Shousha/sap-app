@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:sap/screens/prescriptions.dart';
+import 'package:sap/screens/start.dart';
 import 'package:sap/widgets/gradient_scaffold.dart';
-import 'package:sap/screens/add_prescription.dart';
+import 'add_prescription.dart';
 import 'package:provider/provider.dart';
 import 'package:sap/providers/user_provider.dart';
-import 'package:sap/widgets/link_list_tile.dart';
-import 'package:sap/widgets/logout_list_tile.dart';
+import 'package:sap/widgets/custom_list_tile.dart';
 
 class DoctorHomeScreen extends StatelessWidget {
   const DoctorHomeScreen({super.key});
@@ -21,18 +21,41 @@ class DoctorHomeScreen extends StatelessWidget {
       ),
       body: Column(
         mainAxisAlignment: MainAxisAlignment.center,
-        children: const [
-          LinkListTile(
-            titleText: 'Create new prescription',
+        children: [
+          CustomListTile(
+            titleText: 'Create a new prescription',
             leadingIcon: Icons.add,
-            route: AddPrescriptionForm(),
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const AddPrescriptionForm(),
+              ),
+            ),
           ),
-          LinkListTile(
+          CustomListTile(
             titleText: 'View prescription history',
             leadingIcon: Icons.history,
-            route: PrescriptionsScreen(),
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const PrescriptionsScreen(),
+              ),
+            ),
           ),
-          LogoutListTile(),
+          CustomListTile(
+            titleText: 'Logout',
+            leadingIcon: Icons.logout,
+            onTap: () => {
+              userProvider.logout(),
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const StartScreen(),
+                ),
+                (route) => false,
+              )
+            },
+          ),
         ],
       ),
     );

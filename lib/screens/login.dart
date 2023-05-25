@@ -5,11 +5,11 @@ import 'package:sap/screens/home.dart';
 import 'package:provider/provider.dart';
 import 'package:sap/providers/user_provider.dart';
 import 'package:sap/screens/admin.dart';
+import 'package:sap/utils/dialogs/error_dialog.dart';
 import 'package:sap/utils/graphql_mutations.dart';
 import 'package:sap/widgets/custom_button.dart';
 import 'package:sap/widgets/gradient_scaffold.dart';
 import 'package:sap/widgets/custom_text_field.dart';
-import 'package:sap/utils/dialogs/error_dialog.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -28,7 +28,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
     //admin login
     if (email == 'admin' && password == 'admin') {
-      if (mounted) {
+      if (context.mounted) {
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(
@@ -62,7 +62,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
       userProvider.login(user);
 
-      if (mounted) {
+      if (context.mounted) {
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(

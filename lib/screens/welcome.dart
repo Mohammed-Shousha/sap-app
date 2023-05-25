@@ -1,10 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:sap/screens/start.dart';
-import 'package:sap/utils/constants.dart';
 import 'package:sap/utils/palette.dart';
 import 'package:sap/widgets/gradient_scaffold.dart';
 import 'package:sap/widgets/custom_button.dart';
+
+final List<Map<String, dynamic>> welcomeData = [
+  {
+    'message': 'Welcome to SAP app!',
+    'subMessage': 'We are happy to have you here!',
+    'image': 'assets/images/welcome.svg',
+  },
+  {
+    'message': 'Learn more about us!',
+    'subMessage':
+        'SAP is designed to make getting your medications easy and convenient.',
+    'image': 'assets/images/medicine.svg',
+  },
+  {
+    'message': 'What are you waiting for?',
+    'subMessage': '',
+    'image': 'assets/images/start.svg',
+    'isLastPage': true,
+  },
+];
 
 class WelcomeScreen extends StatefulWidget {
   const WelcomeScreen({super.key});
@@ -21,7 +40,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
   void initState() {
     super.initState();
     _controller = TabController(
-      length: Constants.welcomeData.length,
+      length: welcomeData.length,
       vsync: this,
     );
   }
@@ -45,7 +64,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
             physics: const BouncingScrollPhysics(),
             controller: _controller,
             children: [
-              for (final data in Constants.welcomeData)
+              for (final data in welcomeData)
                 WelcomeWidget(
                   message: data['message'],
                   image: data['image'],
@@ -75,12 +94,12 @@ class WelcomeWidget extends StatelessWidget {
   final bool isLastPage;
 
   const WelcomeWidget({
-    super.key,
+    Key? key,
     required this.message,
     required this.image,
     required this.subMessage,
     this.isLastPage = false,
-  });
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -111,14 +130,12 @@ class WelcomeWidget extends StatelessWidget {
         if (isLastPage)
           CustomButton(
             text: 'Get Started',
-            onPressed: () {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const StartScreen(),
-                ),
-              );
-            },
+            onPressed: () => Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const StartScreen(),
+              ),
+            ),
           ),
       ],
     );

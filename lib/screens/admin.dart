@@ -15,24 +15,19 @@ import 'package:sap/widgets/custom_button.dart';
 import 'package:sap/widgets/gradient_scaffold.dart';
 import 'package:sap/screens/start.dart';
 
-class AdminScreen extends StatefulWidget {
-  const AdminScreen({super.key});
+class MedicinePosition extends StatefulWidget {
+  const MedicinePosition({super.key});
 
   @override
-  State<AdminScreen> createState() => _AdminScreenState();
+  State<MedicinePosition> createState() => _MedicinePositionState();
 }
 
-class _AdminScreenState extends State<AdminScreen> {
+class _MedicinePositionState extends State<MedicinePosition> {
   MedicineModel? _medicine;
   bool _isOpen = false;
   int _addedQuantity = 0;
 
   Future<void> _scanBarcode() async {
-    if (_isOpen) {
-      showErrorDialog(context, 'Please submit the current medicine first');
-      return;
-    }
-
     String barcodeScanRes = await FlutterBarcodeScanner.scanBarcode(
       '#3BBDB1',
       'Cancel',
@@ -165,7 +160,7 @@ class _AdminScreenState extends State<AdminScreen> {
   Widget build(BuildContext context) {
     return GradientScaffold(
       appBar: AppBar(
-        title: const Text('Admin'),
+        title: const Text('Barcode Scanner'),
         actions: [
           IconButton(
             onPressed: () async {

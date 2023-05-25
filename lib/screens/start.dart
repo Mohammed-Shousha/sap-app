@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:sap/screens/login.dart';
 import 'package:sap/screens/register.dart';
 import 'package:sap/screens/register_doctor.dart';
+import 'package:sap/widgets/custom_button.dart';
 import 'package:sap/widgets/gradient_scaffold.dart';
-import 'package:sap/widgets/link_button.dart';
 
 class StartScreen extends StatelessWidget {
   const StartScreen({super.key});
@@ -17,20 +17,37 @@ class StartScreen extends StatelessWidget {
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: const [
-            LinkButton(
+          children: [
+            CustomButton(
               text: 'Log in',
-              route: LoginScreen(),
+              onPressed: () => {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const LoginScreen(),
+                  ),
+                )
+              },
             ),
-            SizedBox(height: 20.0),
-            LinkButton(
+            const SizedBox(height: 20.0),
+            CustomButton(
               text: 'Register',
-              route: RegisterScreen(),
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const RegisterScreen(),
+                ),
+              ),
             ),
-            SizedBox(height: 20.0),
-            LinkButton(
+            const SizedBox(height: 20.0),
+            CustomButton(
               text: 'Register as Doctor',
-              route: RegisterDoctorScreen(),
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const RegisterDoctorScreen(),
+                ),
+              ),
             ),
           ],
         ),

@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
 import 'package:provider/provider.dart';
-import 'package:sap/models/medicine_model.dart';
 import 'package:sap/providers/user_provider.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
-import 'package:sap/utils/dialogs/error_dialog.dart';
-import 'package:sap/utils/dialogs/success_dialog.dart';
+import 'package:logger/logger.dart';
 import 'package:sap/utils/graphql_mutations.dart';
 import 'package:sap/widgets/custom_button.dart';
 import 'package:sap/widgets/custom_text_field.dart';
@@ -35,13 +33,13 @@ class _AddPrescriptionFormState extends State<AddPrescriptionForm> {
 
   Future<void> _scanQrCode() async {
     String barcodeScanRes = await FlutterBarcodeScanner.scanBarcode(
-      '#3BBDB1',
+      '#ff6666',
       'Cancel',
       true,
       ScanMode.QR,
     );
 
-    if (mounted) {
+    if (context.mounted) {
       final result = await GraphQLProvider.of(context).value.query(QueryOptions(
             document: gql(GraphQLQueries.getUser),
             variables: {
@@ -49,8 +47,23 @@ class _AddPrescriptionFormState extends State<AddPrescriptionForm> {
             },
           ));
 
-      if (result.hasException && mounted) {
-        showErrorDialog(context, result.exception!.graphqlErrors.first.message);
+      if (result.hasException && context.mounted) {
+        Logger().e(result.exception);
+        showDialog(
+          context: context,
+          builder: (BuildContext context) => AlertDialog(
+            title: const Text('Error'),
+            content: Text(
+              '${result.exception?.graphqlErrors[0].message}',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
       }
 
       setState(() {
@@ -60,23 +73,6 @@ class _AddPrescriptionFormState extends State<AddPrescriptionForm> {
     }
   }
 
-  void clearAllFields() {
-    clearPrescriptionFields();
-    setState(() {
-      _patientId = '';
-      _patientNameController.clear();
-      _medications.clear();
-    });
-  }
-
-  void clearPrescriptionFields() {
-    setState(() {
-      selectedMedicineId = null;
-      _quantityController.clear();
-      _instructionsController.clear();
-    });
-  }
-
   void _addMedication() {
     final medicineId = selectedMedicineId;
     final medicineName = selectedMedicineName;
@@ -84,48 +80,21 @@ class _AddPrescriptionFormState extends State<AddPrescriptionForm> {
     final instructions = _instructionsController.text.trim();
     final price = selectedMedicinePrice;
 
-    if (medicineId == null ||
-        quantity.isEmpty ||
-        instructions.isEmpty ||
-        _patientId.isEmpty) {
-      showErrorDialog(context, 'Please fill in all fields');
-      return;
+    if (medicineId!.isNotEmpty && quantity.isNotEmpty) {
+      final newMedication = {
+        'medicineId': medicineId,
+        'medicineName': medicineName,
+        'quantity': quantity,
+        'instructions': instructions,
+        'price': price,
+      };
+      setState(() {
+        _medications.add(newMedication);
+        _quantityController.clear();
+        _instructionsController.clear();
+        selectedMedicineId = null;
+      });
     }
-
-    final selectedMedicine = _medications.firstWhere(
-      (medication) => medication['medicineId'] == medicineId,
-      orElse: () => {},
-    );
-
-    if (_medications.contains(selectedMedicine)) {
-      selectedMedicine['quantity'] =
-          (int.parse(selectedMedicine['quantity']) + int.parse(quantity))
-              .toString();
-      selectedMedicine['instructions'] = instructions;
-
-      clearPrescriptionFields();
-      return;
-    }
-
-    final newMedication = {
-      'medicineId': medicineId,
-      'medicineName': medicineName,
-      'quantity': quantity,
-      'instructions': instructions,
-      'price': price,
-    };
-
-    clearPrescriptionFields();
-
-    setState(() {
-      _medications.add(newMedication);
-    });
-  }
-
-  void _removeMedication(int index) {
-    setState(() {
-      _medications.removeAt(index);
-    });
   }
 
   void scrollToEnd() {
@@ -161,11 +130,24 @@ class _AddPrescriptionFormState extends State<AddPrescriptionForm> {
           ),
         );
 
-    if (result.hasException && mounted) {
-      showErrorDialog(context, result.exception!.graphqlErrors.first.message);
+    if (result.hasException && context.mounted) {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) => AlertDialog(
+          title: const Text('Error'),
+          content: Text(
+            '${result.exception?.graphqlErrors[0].message}',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
     } else {
-      showSuccessDialog(context, 'Prescription added successfully');
-      clearAllFields();
+      Navigator.pop(context);
     }
   }
 
@@ -200,60 +182,47 @@ class _AddPrescriptionFormState extends State<AddPrescriptionForm> {
                 builder: (QueryResult result,
                     {Refetch? refetch, FetchMore? fetchMore}) {
                   if (result.hasException) {
-                    return DropdownButtonFormField(
-                      value: null,
-                      items: const [],
-                      onChanged: null,
-                      style: const TextStyle(
-                        fontSize: 20.0,
-                        color: Colors.black87,
-                        fontFamily: 'Montserrat',
-                      ),
-                      decoration: const InputDecoration(
-                        labelText: 'Error fetching medicines',
-                        labelStyle: TextStyle(fontSize: 20.0),
-                      ),
-                    );
+                    return Text(result.exception.toString());
                   }
 
-                  final List<MedicineModel> medicines =
-                      (result.data!['medicines'] as List)
-                          .map((medicine) => MedicineModel.fromJson(medicine))
-                          .toList();
+                  if (result.isLoading) {
+                    return const CircularProgressIndicator();
+                  }
+
+                  final medicinesOptions = result.data!['medicines'];
+                  Logger().i(medicinesOptions);
 
                   return DropdownButtonFormField(
                     value: selectedMedicineId,
-                    items: medicines.map<DropdownMenuItem<String>>((medicine) {
+                    items: medicinesOptions
+                        .map<DropdownMenuItem<String>>((medicineOption) {
                       return DropdownMenuItem<String>(
-                        value: medicine.id,
+                        value: medicineOption['_id'],
                         child: Text(
-                          medicine.name,
+                          medicineOption['name'],
                         ),
                       );
                     }).toList(),
-                    onChanged: medicines.isNotEmpty
-                        ? (String? value) {
-                            setState(() {
-                              selectedMedicineId = value;
-                              final selectedMedicine = medicines.firstWhere(
-                                  (medicine) => medicine.id == value);
-                              selectedMedicineName = selectedMedicine.name;
-                              selectedMedicinePrice = selectedMedicine.price;
-                            });
-                          }
-                        : null,
+                    onChanged: (value) {
+                      setState(() {
+                        selectedMedicineId = value!;
+                        selectedMedicineName = medicinesOptions.firstWhere(
+                            (medicineOption) =>
+                                medicineOption['_id'] == value)['name'];
+                        selectedMedicinePrice = medicinesOptions.firstWhere(
+                            (medicineOption) =>
+                                medicineOption['_id'] == value)['price'];
+                        Logger().i(selectedMedicinePrice);
+                      });
+                    },
                     style: const TextStyle(
                       fontSize: 20.0,
                       color: Colors.black87,
                       fontFamily: 'Montserrat',
                     ),
-                    decoration: InputDecoration(
-                      labelText: medicines.isNotEmpty
-                          ? 'Medicine'
-                          : 'No medicines found',
-                      labelStyle: const TextStyle(
-                        fontSize: 20.0,
-                      ),
+                    decoration: const InputDecoration(
+                      labelText: 'Medicine',
+                      labelStyle: TextStyle(fontSize: 20.0),
                     ),
                   );
                 },
@@ -271,9 +240,9 @@ class _AddPrescriptionFormState extends State<AddPrescriptionForm> {
               ),
               const SizedBox(height: 16),
               CustomButton(
-                onPressed: () {
-                  _addMedication();
-                  scrollToEnd();
+                onPressed: () => {
+                  _addMedication(),
+                  scrollToEnd(),
                 },
                 text: 'Add Medication',
               ),
@@ -291,11 +260,12 @@ class _AddPrescriptionFormState extends State<AddPrescriptionForm> {
                       return Card(
                         child: ListTile(
                           title: Text(medication['medicineName']),
-                          subtitle: Text(
-                              '${medication['quantity']} pack(s)\n${medication['instructions']}'),
+                          subtitle: Text(medication['quantity']),
                           trailing: IconButton(
                             icon: const Icon(Icons.delete),
-                            onPressed: () => _removeMedication(index),
+                            onPressed: () => setState(() {
+                              _medications.removeAt(index);
+                            }),
                           ),
                         ),
                       );
@@ -305,7 +275,7 @@ class _AddPrescriptionFormState extends State<AddPrescriptionForm> {
               const SizedBox(height: 16),
               CustomButton(
                 text: 'Submit',
-                onPressed: handleSubmit,
+                onPressed: () => handleSubmit(),
               ),
             ],
           ),
