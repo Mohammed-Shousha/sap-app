@@ -42,20 +42,12 @@ class UserProvider extends ChangeNotifier {
   }
 
   void login(
-    String id,
-    String name,
-    String email,
-    bool isDoctor,
+    UserModel user,
   ) async {
-    _user = UserModel(
-      id: id,
-      name: name,
-      email: email,
-      isDoctor: isDoctor,
-    );
+    _user = user;
 
     await prefs.setBool('isLoggedIn', true);
-    await prefs.setString('userId', id);
+    await prefs.setString('userId', user.id);
 
     notifyListeners();
   }
