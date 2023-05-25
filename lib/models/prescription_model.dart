@@ -1,30 +1,51 @@
-class Prescription {
+class PrescriptionModel {
   final String id;
-  final String doctorId;
-  final String patientId;
+  final String doctorName;
+  final String patientName;
   final DateTime date;
-  final bool isPaid;
-  final bool isReceived;
-  final List<Medicine> medicines;
+  final bool? isPaid;
+  final bool? isReceived;
+  final List<PrescriptionMedicine>? medicines;
 
-  Prescription({
+  PrescriptionModel({
     required this.id,
-    required this.doctorId,
-    required this.patientId,
+    required this.doctorName,
+    required this.patientName,
     required this.date,
-    required this.isPaid,
-    required this.isReceived,
-    required this.medicines,
+    this.isPaid,
+    this.isReceived,
+    this.medicines,
   });
+
+  factory PrescriptionModel.fromJson(Map<String, dynamic> json) {
+    return PrescriptionModel(
+      id: json['_id'],
+      doctorName: json['doctorName'],
+      patientName: json['patientName'],
+      date: DateTime.parse(json['date']),
+      isPaid: json['isPaid'],
+      isReceived: json['isReceived'],
+      medicines: ((json['medicines'] ?? []) as List<dynamic>)
+          .map((medicine) => PrescriptionMedicine(
+                name: medicine['medicineName'],
+                quantity: medicine['quantity'],
+                price: medicine['price'],
+                doctorInstructions: medicine['doctorInstructions'],
+              ))
+          .toList(),
+    );
+  }
 }
 
-class Medicine {
-  final String id;
+class PrescriptionMedicine {
+  final String name;
   final int quantity;
+  final num price;
   final String doctorInstructions;
 
-  Medicine({
-    required this.id,
+  PrescriptionMedicine({
+    required this.name,
+    required this.price,
     required this.quantity,
     required this.doctorInstructions,
   });
