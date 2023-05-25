@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:sap/screens/welcome.dart';
+import 'package:sap/utils/constants.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -21,10 +22,15 @@ void main() async {
   ValueNotifier<GraphQLClient> client = ValueNotifier(
     GraphQLClient(
       link: HttpLink(
-        'http://192.168.1.18:4040/graphql',
+        '${Constants.baseUrl}/graphql',
       ),
       cache: GraphQLCache(
         store: HiveStore(),
+      ),
+      defaultPolicies: DefaultPolicies(
+        query: Policies(
+          fetch: FetchPolicy.cacheAndNetwork,
+        ),
       ),
     ),
   );
