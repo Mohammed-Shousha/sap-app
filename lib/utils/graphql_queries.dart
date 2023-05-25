@@ -5,12 +5,10 @@ class GraphQLQueries {
         _id
         name
         availableQuantity
-        otc
         position {
           row
           col
         }
-        price
       }
     }
   ''';
@@ -40,17 +38,9 @@ class GraphQLQueries {
     query PrescriptionByUser($userId: ID!){
       prescriptionsByUser(userId: $userId) {
         _id
+        date
         patientName
         doctorName
-        date
-        isPaid
-        isRecived
-        medicines {
-          medicineId
-          quantity
-          doctorInstructions
-          price
-        }
       }
     }
   ''';
@@ -63,11 +53,11 @@ class GraphQLQueries {
         doctorName
         date
         isPaid
-        isRecived
+        isReceived
         medicines {
           medicineName
-          quantity
           doctorInstructions
+          quantity
           price
         }
       }
