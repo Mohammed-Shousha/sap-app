@@ -3,10 +3,12 @@ import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:sap/screens/home_doctor.dart';
 import 'package:provider/provider.dart';
 import 'package:sap/providers/user_provider.dart';
+import 'package:sap/utils/dialogs/error_dialog.dart';
 import 'package:sap/utils/graphql_mutations.dart';
 import 'package:sap/widgets/custom_button.dart';
 import 'package:sap/widgets/custom_text_field.dart';
 import 'package:sap/widgets/gradient_scaffold.dart';
+import 'package:sap/models/user_model.dart';
 
 class RegisterDoctorScreen extends StatefulWidget {
   const RegisterDoctorScreen({super.key});
@@ -38,36 +40,16 @@ class _RegisterDoctorScreenState extends State<RegisterDoctorScreen> {
             },
           ),
         );
-    if (result.hasException) {
-      final GraphQLError error = result.exception!.graphqlErrors.first;
-      final String errorMessage = error.message;
-
-      if (context.mounted) {
-        showDialog(
-          context: context,
-          builder: (BuildContext context) => AlertDialog(
-            title: const Text('Register Error'),
-            content: Text(errorMessage),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('OK'),
-              ),
-            ],
-          ),
-        );
-      }
+    if (result.hasException && mounted) {
+      showErrorDialog(context, result.exception!.graphqlErrors.first.message);
     } else {
-      final Map<String, dynamic> userData = result.data!['registerDoctor'];
-      final String userId = userData['_id'];
-      final String userName = userData['name'];
-      final bool isDoctor = userData['isDoctor'];
+      final user = UserModel.fromJson(result.data!['registerDoctor']);
 
-      if (context.mounted) {
+      if (mounted) {
         final UserProvider userProvider =
             Provider.of<UserProvider>(context, listen: false);
 
-        userProvider.login(userId, userName, email, isDoctor);
+        userProvider.login(user);
 
         Navigator.pushAndRemoveUntil(
           context,
@@ -89,34 +71,33 @@ class _RegisterDoctorScreenState extends State<RegisterDoctorScreen> {
       body: Column(
         children: [
           CustomTextField(
-            controller: _nameController,
             label: 'Name',
+            controller: _nameController,
             keyboardType: TextInputType.name,
           ),
-          const SizedBox(height: 16.0),
+          const SizedBox(height: 16),
           CustomTextField(
-            controller: _emailController,
             label: 'Email',
+            controller: _emailController,
             keyboardType: TextInputType.emailAddress,
           ),
-          const SizedBox(height: 16.0),
+          const SizedBox(height: 16),
           CustomTextField(
-            controller: _licenseController,
             label: 'License Number',
+            controller: _licenseController,
             keyboardType: TextInputType.number,
           ),
-          const SizedBox(height: 16.0),
+          const SizedBox(height: 16),
           CustomTextField(
-            controller: _passwordController,
             label: 'Password',
+            controller: _passwordController,
             obscureText: true,
+            textInputAction: TextInputAction.done,
           ),
-          const SizedBox(height: 16.0),
+          const SizedBox(height: 32),
           CustomButton(
-            onPressed: () {
-              handleRegister();
-            },
             text: 'Register',
+            onPressed: handleRegister,
           ),
         ],
       ),
