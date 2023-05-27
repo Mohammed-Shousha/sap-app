@@ -1,14 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:sap/providers/user_provider.dart';
 import 'package:sap/screens/home.dart';
 import 'package:sap/utils/dialogs/error_dialog.dart';
-import 'package:sap/utils/graphql_mutations.dart';
 import 'package:sap/widgets/custom_button.dart';
 import 'package:sap/widgets/custom_text_field.dart';
 import 'package:sap/widgets/gradient_scaffold.dart';
-import 'package:sap/models/user_model.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -22,40 +19,26 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
-  void handleRegister() async {
+  void _handleRegister() async {
     final String name = _nameController.text.trim();
     final String email = _emailController.text.trim();
     final String password = _passwordController.text.trim();
 
-    final result = await GraphQLProvider.of(context).value.mutate(
-          MutationOptions(
-            document: gql(GraphQLMutations.registerUser),
-            variables: {
-              'name': name,
-              'email': email,
-              'password': password,
-            },
-          ),
-        );
-    if (result.hasException && mounted) {
-      showErrorDialog(context, result.exception!.graphqlErrors.first.message);
+    final UserProvider userProvider =
+        Provider.of<UserProvider>(context, listen: false);
+
+    await userProvider.register(name, email, password);
+
+    if (userProvider.errorMessage.isNotEmpty && mounted) {
+      showErrorDialog(context, userProvider.errorMessage);
     } else {
-      UserModel user = UserModel.fromJson(result.data!['registerUser']);
-
-      if (mounted) {
-        final UserProvider userProvider =
-            Provider.of<UserProvider>(context, listen: false);
-
-        userProvider.login(user);
-
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const HomeScreen(),
-          ),
-          (route) => false,
-        );
-      }
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const HomeScreen(),
+        ),
+        (route) => false,
+      );
     }
   }
 
@@ -88,7 +71,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           const SizedBox(height: 32),
           CustomButton(
             text: 'Register',
-            onPressed: handleRegister,
+            onPressed: _handleRegister,
           ),
         ],
       ),

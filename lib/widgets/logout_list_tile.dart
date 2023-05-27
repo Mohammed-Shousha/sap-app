@@ -10,7 +10,6 @@ class LogoutListTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final userProvider = Provider.of<UserProvider>(context);
     return CustomListTile(
       titleText: 'Logout',
       leadingIcon: Icons.logout,
@@ -18,7 +17,7 @@ class LogoutListTile extends StatelessWidget {
         final shouldLogout = await showLogoutDialog(context);
 
         if (shouldLogout && context.mounted) {
-          userProvider.logout();
+          context.read<UserProvider>().logout();
           Navigator.pushAndRemoveUntil(
             context,
             MaterialPageRoute(

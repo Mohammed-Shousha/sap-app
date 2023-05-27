@@ -27,7 +27,11 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final userProvider = Provider.of<UserProvider>(context);
 
-    if (userProvider.user == null) {
+    final user = userProvider.user;
+    final isLoading = userProvider.isLoading;
+    final errorMessage = userProvider.errorMessage;
+
+    if (isLoading) {
       return const GradientScaffold(
         body: Center(
           child: CircularProgressIndicator(),
@@ -35,7 +39,15 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     }
 
-    if (userProvider.user!.isDoctor) {
+    if (errorMessage.isNotEmpty) {
+      return GradientScaffold(
+        body: Center(
+          child: Text(errorMessage),
+        ),
+      );
+    }
+
+    if (user!.isDoctor) {
       return const DoctorHomeScreen();
     } else {
       return const UserHomeScreen();

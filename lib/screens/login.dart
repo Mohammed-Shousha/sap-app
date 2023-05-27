@@ -1,12 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:graphql_flutter/graphql_flutter.dart';
-import 'package:sap/models/user_model.dart';
 import 'package:sap/screens/home.dart';
 import 'package:provider/provider.dart';
 import 'package:sap/providers/user_provider.dart';
 import 'package:sap/screens/admin.dart';
 import 'package:sap/utils/dialogs/error_dialog.dart';
-import 'package:sap/utils/graphql_mutations.dart';
 import 'package:sap/widgets/custom_button.dart';
 import 'package:sap/widgets/gradient_scaffold.dart';
 import 'package:sap/widgets/custom_text_field.dart';
@@ -28,7 +25,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
     //admin login
     if (email == 'admin' && password == 'admin') {
-      if (context.mounted) {
+      if (mounted) {
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(
@@ -40,37 +37,21 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
-    final result = await GraphQLProvider.of(context).value.mutate(
-          MutationOptions(
-            document: gql(
-              GraphQLMutations.login,
-            ),
-            variables: {
-              'email': email,
-              'password': password,
-            },
-          ),
-        );
+    final UserProvider userProvider =
+        Provider.of<UserProvider>(context, listen: false);
 
-    if (result.hasException && mounted) {
-      showErrorDialog(context, result.exception!.graphqlErrors.first.message);
+    await userProvider.login(email, password);
+
+    if (userProvider.errorMessage.isNotEmpty && mounted) {
+      showErrorDialog(context, userProvider.errorMessage);
     } else {
-      final UserModel user = UserModel.fromJson(result.data!['login']);
-
-      final UserProvider userProvider =
-          Provider.of<UserProvider>(context, listen: false);
-
-      userProvider.login(user);
-
-      if (context.mounted) {
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const HomeScreen(),
-          ),
-          (route) => false,
-        );
-      }
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const HomeScreen(),
+        ),
+        (route) => false,
+      );
     }
   }
 
