@@ -96,168 +96,172 @@ class _PrescriptionDetailsScreenState extends State<PrescriptionDetailsScreen> {
               : const SizedBox(),
         ],
       ),
-      body: Query(
-        options: QueryOptions(
-          document: gql(
-            GraphQLQueries.getPrescription,
+      body: SingleChildScrollView(
+        child: Query(
+          options: QueryOptions(
+            document: gql(
+              GraphQLQueries.getPrescription,
+            ),
+            variables: {
+              'id': widget.prescriptionId,
+            },
           ),
-          variables: {
-            'id': widget.prescriptionId,
-          },
-        ),
-        builder: (
-          QueryResult result, {
-          Refetch? refetch,
-          FetchMore? fetchMore,
-        }) {
-          if (result.hasException) {
-            return const ErrorText(text: 'Error fetching prescription details');
-          }
+          builder: (
+            QueryResult result, {
+            Refetch? refetch,
+            FetchMore? fetchMore,
+          }) {
+            if (result.hasException) {
+              return const ErrorText(
+                  text: 'Error fetching prescription details');
+            }
 
-          if (result.isLoading) {
-            return const Center(child: CircularProgressIndicator());
-          }
+            if (result.isLoading) {
+              return const Center(child: CircularProgressIndicator());
+            }
 
-          final prescription =
-              PrescriptionModel.fromJson(result.data!['prescriptionById']);
+            final prescription =
+                PrescriptionModel.fromJson(result.data!['prescriptionById']);
 
-          final prescriptionTotal = calculatePrescriptionTotal(prescription);
+            final prescriptionTotal = calculatePrescriptionTotal(prescription);
 
-          if (prescription.isReceived!) _alreadyReceived = true;
+            if (prescription.isReceived!) _alreadyReceived = true;
 
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const SizedBox(height: 16),
-              Text(
-                'ID: ${prescription.id}',
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const SizedBox(height: 16),
+                Text(
+                  'ID: ${prescription.id}',
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Doctor: ${prescription.doctorName}',
-                style: const TextStyle(
-                  fontSize: 16,
+                const SizedBox(height: 8),
+                Text(
+                  'Doctor: ${prescription.doctorName}',
+                  style: const TextStyle(
+                    fontSize: 16,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Patient: ${prescription.patientName}',
-                style: const TextStyle(fontSize: 16),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Date: ${formatDateTime(prescription.date)}',
-                style: const TextStyle(fontSize: 16),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Received: ${prescription.isReceived! ? 'Yes' : 'No'}',
-                style: const TextStyle(fontSize: 16),
-              ),
-              const SizedBox(height: 8),
-              widget.isPatientPrescription
-                  ? Text(
-                      'Paid: ${prescription.isPaid! || _paymentCompleted ? 'Yes' : 'No'}',
-                      style: const TextStyle(fontSize: 16),
-                    )
-                  : const SizedBox(),
-              const SizedBox(height: 20),
-              const Text(
-                'Medicines:',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
+                const SizedBox(height: 8),
+                Text(
+                  'Patient: ${prescription.patientName}',
+                  style: const TextStyle(fontSize: 16),
                 ),
-              ),
-              ListView.builder(
-                shrinkWrap: true,
-                padding: const EdgeInsets.all(0),
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: prescription.medicines!.length,
-                itemBuilder: (context, index) {
-                  final medicine = prescription.medicines![index];
+                const SizedBox(height: 8),
+                Text(
+                  'Date: ${formatDateTime(prescription.date)}',
+                  style: const TextStyle(fontSize: 16),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Received: ${prescription.isReceived! ? 'Yes' : 'No'}',
+                  style: const TextStyle(fontSize: 16),
+                ),
+                const SizedBox(height: 8),
+                widget.isPatientPrescription
+                    ? Text(
+                        'Paid: ${prescription.isPaid! || _paymentCompleted ? 'Yes' : 'No'}',
+                        style: const TextStyle(fontSize: 16),
+                      )
+                    : const SizedBox(),
+                const SizedBox(height: 20),
+                const Text(
+                  'Medicines:',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+                ListView.builder(
+                  shrinkWrap: true,
+                  padding: const EdgeInsets.all(0),
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: prescription.medicines!.length,
+                  itemBuilder: (context, index) {
+                    final medicine = prescription.medicines![index];
 
-                  return Card(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    shadowColor: Palette.primary,
-                    elevation: 2,
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                    return Card(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      shadowColor: Palette.primary,
+                      elevation: 2,
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              medicine.name,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              medicine.doctorInstructions,
+                              style: const TextStyle(fontSize: 16),
+                            ),
+                            const SizedBox(height: 8),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  '${medicine.quantity} pack(s)',
+                                  style: const TextStyle(fontSize: 16),
+                                ),
+                                widget.isPatientPrescription
+                                    ? Text(
+                                        '${medicine.price} EGP',
+                                        style: const TextStyle(fontSize: 16),
+                                      )
+                                    : const SizedBox(),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(height: 24),
+                widget.isPatientPrescription &&
+                        !_paymentCompleted &&
+                        !prescription.isPaid!
+                    ? Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           Text(
-                            medicine.name,
+                            'Total: $prescriptionTotal EGP',
                             style: const TextStyle(
                               fontWeight: FontWeight.bold,
-                              fontSize: 16,
+                              fontSize: 20,
                             ),
                           ),
-                          const SizedBox(height: 8),
-                          Text(
-                            medicine.doctorInstructions,
-                            style: const TextStyle(fontSize: 16),
+                          const SizedBox(height: 16),
+                          CustomButton(
+                            text: "Pay",
+                            onPressed: () async {
+                              _isProcessing
+                                  ? null
+                                  : await _completePayment(
+                                      prescriptionTotal,
+                                      widget.prescriptionId,
+                                    );
+                            },
                           ),
-                          const SizedBox(height: 8),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                '${medicine.quantity} pack(s)',
-                                style: const TextStyle(fontSize: 16),
-                              ),
-                              widget.isPatientPrescription
-                                  ? Text(
-                                      '${medicine.price} EGP',
-                                      style: const TextStyle(fontSize: 16),
-                                    )
-                                  : const SizedBox(),
-                            ],
-                          ),
+                          const SizedBox(height: 16),
                         ],
-                      ),
-                    ),
-                  );
-                },
-              ),
-              const SizedBox(height: 24),
-              widget.isPatientPrescription &&
-                      !_paymentCompleted &&
-                      !prescription.isPaid!
-                  ? Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Text(
-                          'Total: $prescriptionTotal ',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 20,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        CustomButton(
-                          text: "Pay",
-                          onPressed: () async {
-                            _isProcessing
-                                ? null
-                                : await _completePayment(
-                                    prescriptionTotal,
-                                    widget.prescriptionId,
-                                  );
-                          },
-                        ),
-                      ],
-                    )
-                  : const SizedBox()
-            ],
-          );
-        },
+                      )
+                    : const SizedBox()
+              ],
+            );
+          },
+        ),
       ),
     );
   }
