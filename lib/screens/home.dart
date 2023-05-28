@@ -3,6 +3,7 @@ import 'package:sap/screens/home_doctor.dart';
 import 'package:sap/screens/home_user.dart';
 import 'package:provider/provider.dart';
 import 'package:sap/providers/user_provider.dart';
+import 'package:sap/widgets/error_text.dart';
 import 'package:sap/widgets/gradient_scaffold.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -15,11 +16,11 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
-    super.initState();
     final userProvider = Provider.of<UserProvider>(
       context,
       listen: false,
     );
+    super.initState();
     userProvider.init();
   }
 
@@ -42,7 +43,7 @@ class _HomeScreenState extends State<HomeScreen> {
     if (errorMessage.isNotEmpty) {
       return GradientScaffold(
         body: Center(
-          child: Text(errorMessage),
+          child: ErrorText(text: errorMessage),
         ),
       );
     }

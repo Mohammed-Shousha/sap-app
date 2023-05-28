@@ -12,11 +12,11 @@ class DoctorHomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final userProvider = Provider.of<UserProvider>(context);
+    final user = Provider.of<UserProvider>(context).user!;
 
     return GradientScaffold(
       appBar: AppBar(
-        title: Text('Welcome, ${userProvider.user?.name}'),
+        title: Text('Welcome, ${user.name}'),
         automaticallyImplyLeading: false,
       ),
       body: Column(

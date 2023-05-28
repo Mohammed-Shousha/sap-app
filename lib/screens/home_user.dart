@@ -12,12 +12,12 @@ class UserHomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final userProvider = Provider.of<UserProvider>(context);
+    final user = Provider.of<UserProvider>(context).user!;
 
     return GradientScaffold(
       appBar: AppBar(
         title: Text(
-          'Welcome, ${userProvider.user?.name}',
+          'Welcome, ${user.name}',
         ),
       ),
       body: Column(
@@ -32,7 +32,7 @@ class UserHomeScreen extends StatelessWidget {
             titleText: 'View QR Code',
             leadingIcon: Icons.qr_code,
             route: QRCodeScreen(
-              id: userProvider.user!.id,
+              id: user.id,
               isUser: true,
             ),
           ),
