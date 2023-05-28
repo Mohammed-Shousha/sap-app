@@ -30,26 +30,22 @@ class UserProvider extends ChangeNotifier {
       String id = prefs.getString('userId') ?? '';
 
       _isLoading = true;
+      _errorMessage = '';
 
-      final result = await client.query(
-        QueryOptions(
-          document: gql(
-            GraphQLQueries.getUser,
-          ),
-          variables: {
-            'userId': id,
-          },
-        ),
-      );
+      UserModel user;
 
-      if (result.hasException) {
+      try {
+        user = await _getUserById(id);
+      } catch (e) {
         _isLoading = false;
-        _errorMessage = result.exception!.graphqlErrors.first.message;
-      } else {
-        _isLoading = false;
-        _user = UserModel.fromJson(result.data!['user']);
-        notifyListeners();
+        _errorMessage = e.toString();
+        return;
       }
+
+      _isLoading = false;
+      _user = user;
+
+      notifyListeners();
     }
   }
 
@@ -72,13 +68,13 @@ class UserProvider extends ChangeNotifier {
     if (result.hasException) {
       _isLoading = false;
       _errorMessage = result.exception!.graphqlErrors.first.message;
-      notifyListeners();
     } else {
       _isLoading = false;
       _user = UserModel.fromJson(result.data!['login']);
       await _setUserId(_user!.id);
-      notifyListeners();
     }
+
+    notifyListeners();
   }
 
   Future<void> register(
@@ -105,13 +101,13 @@ class UserProvider extends ChangeNotifier {
     if (result.hasException) {
       _isLoading = false;
       _errorMessage = result.exception!.graphqlErrors.first.message;
-      notifyListeners();
     } else {
       _isLoading = false;
       _user = UserModel.fromJson(result.data!['registerUser']);
       await _setUserId(_user!.id);
-      notifyListeners();
     }
+
+    notifyListeners();
   }
 
   Future<void> registerDoctor(
@@ -139,13 +135,33 @@ class UserProvider extends ChangeNotifier {
     if (result.hasException) {
       _isLoading = false;
       _errorMessage = result.exception!.graphqlErrors.first.message;
-      notifyListeners();
     } else {
       _isLoading = false;
       _user = UserModel.fromJson(result.data!['registerDoctor']);
       await _setUserId(_user!.id);
-      notifyListeners();
     }
+
+    notifyListeners();
+  }
+
+  Future<void> adminLogin(String email, String password) async {
+    _isLoading = true;
+    _errorMessage = '';
+    notifyListeners();
+
+    if (email == 'admin' && password == 'admin') {
+      _user = UserModel(
+        id: 'admin',
+        name: 'admin',
+        email: email,
+        isDoctor: false,
+      );
+    } else {
+      _errorMessage = 'Invalid credentials';
+    }
+
+    _isLoading = false;
+    notifyListeners();
   }
 
   void logout() async {
@@ -154,6 +170,26 @@ class UserProvider extends ChangeNotifier {
     await _removeUserId();
 
     notifyListeners();
+  }
+
+  Future<UserModel?> getUser(String id) async {
+    _isLoading = true;
+    _errorMessage = '';
+    notifyListeners();
+
+    UserModel? user;
+
+    try {
+      user = await _getUserById(id);
+    } catch (e) {
+      _errorMessage = e.toString();
+      user = null;
+    }
+
+    _isLoading = false;
+
+    notifyListeners();
+    return user;
   }
 
   Future<void> _setUserId(String userId) async {
@@ -165,5 +201,24 @@ class UserProvider extends ChangeNotifier {
   Future<void> _removeUserId() async {
     await prefs.setBool('isLoggedIn', false);
     await prefs.remove('userId');
+  }
+
+  Future<UserModel> _getUserById(String id) async {
+    final result = await client.query(
+      QueryOptions(
+        document: gql(
+          GraphQLQueries.getUser,
+        ),
+        variables: {
+          'userId': id,
+        },
+      ),
+    );
+
+    if (result.hasException) {
+      throw result.exception!.graphqlErrors.first.message;
+    } else {
+      return UserModel.fromJson(result.data!['user']);
+    }
   }
 }
