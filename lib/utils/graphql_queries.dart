@@ -34,18 +34,19 @@ class GraphQLQueries {
     }
   ''';
 
-  static const String getPrescriptions = r'''
-    query PrescriptionByUser($userId: ID!){
+  static const String getUserPrescriptions = r'''
+    query PrescriptionsByUser($userId: ID!){
       prescriptionsByUser(userId: $userId) {
         _id
         date
         patientName
         doctorName
+        date
       }
     }
   ''';
 
-  static const String getPrescription = r'''
+  static const String getPrescriptionDetails = r'''
     query PrescriptionById($id: ID!){
       prescriptionById(id: $id) {
         _id
@@ -55,6 +56,7 @@ class GraphQLQueries {
         isPaid
         isReceived
         medicines {
+          medicineId
           medicineName
           doctorInstructions
           quantity
