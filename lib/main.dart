@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
+import 'package:sap/providers/medicines_provider.dart';
+import 'package:sap/providers/prescriptions_provider.dart';
 import 'package:sap/screens/welcome.dart';
 import 'package:sap/utils/constants.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -39,23 +41,34 @@ void main() async {
   bool isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
 
   runApp(
-    ChangeNotifierProvider(
-      create: (context) => UserProvider(
-        client: client.value,
-        prefs: prefs,
-      ),
-      child: GraphQLProvider(
-        client: client,
-        child: MaterialApp(
-          title: 'SAP',
-          debugShowCheckedModeBanner: false,
-          theme: ThemeData(
-            primarySwatch: Palette.primary,
-            fontFamily: 'Montserrat',
-            visualDensity: VisualDensity.adaptivePlatformDensity,
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(
+          create: (context) => UserProvider(
+            client: client.value,
+            prefs: prefs,
           ),
-          home: isLoggedIn ? const HomeScreen() : const WelcomeScreen(),
         ),
+        ChangeNotifierProvider(
+          create: (context) => PrescriptionsProvider(
+            client: client.value,
+          ),
+        ),
+        ChangeNotifierProvider(
+          create: (context) => MedicinesProvider(
+            client: client.value,
+          ),
+        ),
+      ],
+      child: MaterialApp(
+        title: 'SAP',
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData(
+          primarySwatch: Palette.primary,
+          fontFamily: 'Montserrat',
+          visualDensity: VisualDensity.adaptivePlatformDensity,
+        ),
+        home: isLoggedIn ? const HomeScreen() : const WelcomeScreen(),
       ),
     ),
   );

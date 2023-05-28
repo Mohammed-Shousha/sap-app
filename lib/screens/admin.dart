@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:provider/provider.dart';
+import 'package:sap/providers/medicines_provider.dart';
 import 'package:sap/utils/constants.dart';
 import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
-import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:sap/models/medicine_model.dart';
 import 'package:sap/utils/dialogs/error_dialog.dart';
 import 'package:sap/utils/dialogs/logout_dialog.dart';
 import 'package:sap/utils/dialogs/success_dialog.dart';
-import 'package:sap/utils/graphql_mutations.dart';
-import 'package:sap/utils/graphql_queries.dart';
 import 'package:sap/utils/palette.dart';
 import 'package:sap/widgets/custom_button.dart';
 import 'package:sap/widgets/gradient_scaffold.dart';
@@ -27,59 +26,61 @@ class _AdminScreenState extends State<AdminScreen> {
   bool _isOpen = false;
   int _addedQuantity = 0;
 
-  Future<void> _scanBarcode() async {
+  Future<void> _scanMedicineBarcode() async {
     if (_isOpen) {
       showErrorDialog(context, 'Please submit the current medicine first');
       return;
     }
 
-    String barcodeScanRes = await FlutterBarcodeScanner.scanBarcode(
+    String medicineBarcode = await FlutterBarcodeScanner.scanBarcode(
       '#3BBDB1',
       'Cancel',
       true,
       ScanMode.QR,
     );
 
+    if (medicineBarcode == '-1') {
+      return;
+    }
+
     if (mounted) {
-      final result = await GraphQLProvider.of(context).value.query(
-            QueryOptions(
-              document: gql(GraphQLQueries.getMedicine),
-              variables: {
-                'medicineId': barcodeScanRes,
-              },
-              fetchPolicy: FetchPolicy.noCache,
-            ),
-          );
+      MedicinesProvider medicinesProvider =
+          Provider.of<MedicinesProvider>(context, listen: false);
 
-      if (result.hasException && mounted) {
-        showErrorDialog(context, result.exception!.graphqlErrors.first.message);
+      await medicinesProvider.getMedicine(medicineBarcode);
+
+      final medicine = medicinesProvider.medicine;
+
+      final errorMessage = medicinesProvider.errorMessage;
+
+      if (errorMessage.isNotEmpty && mounted) {
+        showErrorDialog(context, errorMessage);
+      } else {
+        setState(() {
+          _medicine = medicine;
+        });
       }
-
-      setState(() {
-        _medicine = MedicineModel.fromJson(result.data!['medicineById']);
-      });
     }
   }
 
   Future<void> _submit() async {
-    final result = await GraphQLProvider.of(context).value.mutate(
-          MutationOptions(
-            document: gql(GraphQLMutations.updateMedicine),
-            variables: {
-              'medicineId': _medicine!.id,
-              'addedQuantity': _addedQuantity,
-            },
-          ),
-        );
+    MedicinesProvider medicinesProvider =
+        Provider.of<MedicinesProvider>(context, listen: false);
 
-    if (result.hasException && mounted) {
-      showErrorDialog(context, result.exception!.graphqlErrors.first.message);
-      await _closeShelf();
-      return;
+    await medicinesProvider.updateMedicine(
+      _medicine!.id,
+      _addedQuantity,
+    );
+
+    final errorMessage = medicinesProvider.errorMessage;
+
+    if (errorMessage.isNotEmpty && mounted) {
+      showErrorDialog(context, errorMessage);
     } else {
       showSuccessDialog(context, 'Medicines added successfully');
-      await _closeShelf();
     }
+
+    await _closeShelf();
   }
 
   Future<void> _openShelf() async {
@@ -163,6 +164,8 @@ class _AdminScreenState extends State<AdminScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isLoading = Provider.of<MedicinesProvider>(context).isLoading;
+
     return GradientScaffold(
       appBar: AppBar(
         title: const Text('Barcode Scanner'),
@@ -185,105 +188,114 @@ class _AdminScreenState extends State<AdminScreen> {
         ],
       ),
       body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _medicine == null
-                ? const SizedBox.shrink()
-                : Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        const SizedBox(height: 16),
-                        Text(
-                          'Scanned Medicine: ${_medicine?.name}',
-                          style: const TextStyle(fontSize: 18),
-                        ),
-                        const SizedBox(height: 16),
-                        const Text("Add the medicine to the selected cell"),
-                        Text('Row: ${(_medicine!.position!['row'] + 1)}, '
-                            'Column: ${(_medicine!.position!['col'] + 1)}'),
-                        Expanded(
-                          child: GridView.count(
-                            childAspectRatio: 0.5,
-                            padding: const EdgeInsets.only(top: 10),
-                            crossAxisCount: Constants.colCount,
-                            children: List.generate(
-                              Constants.rowCount * Constants.colCount,
-                              (index) {
-                                final row = index ~/ Constants.colCount;
-                                final col = index % Constants.colCount;
-                                return GridTile(
-                                  header: const SizedBox(height: 10),
-                                  child: Container(
-                                    padding: const EdgeInsets.all(8),
-                                    decoration: BoxDecoration(
-                                      border: Border.all(
-                                        color: Palette.primary,
-                                      ),
-                                      color: row ==
-                                                  _medicine?.position?['row'] &&
-                                              col == _medicine?.position?['col']
-                                          ? Palette.primary
-                                          : Colors.transparent,
-                                    ),
-                                    child: Center(
-                                      child: Text(
-                                        '${row + 1}, ${col + 1}',
-                                        style: const TextStyle(fontSize: 18),
-                                      ),
-                                    ),
+        child: isLoading
+            ? const CircularProgressIndicator()
+            : Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _medicine == null
+                      ? const SizedBox.shrink()
+                      : Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              const SizedBox(height: 16),
+                              Text(
+                                'Scanned Medicine: ${_medicine?.name}',
+                                style: const TextStyle(fontSize: 18),
+                              ),
+                              const SizedBox(height: 16),
+                              const Text(
+                                  "Add the medicine to the selected cell"),
+                              Text('Row: ${(_medicine!.position!['row'] + 1)}, '
+                                  'Column: ${(_medicine!.position!['col'] + 1)}'),
+                              Expanded(
+                                child: GridView.count(
+                                  childAspectRatio: 0.5,
+                                  padding: const EdgeInsets.only(top: 10),
+                                  crossAxisCount: Constants.colCount,
+                                  children: List.generate(
+                                    Constants.rowCount * Constants.colCount,
+                                    (index) {
+                                      final row = index ~/ Constants.colCount;
+                                      final col = index % Constants.colCount;
+                                      return GridTile(
+                                        header: const SizedBox(height: 10),
+                                        child: Container(
+                                          padding: const EdgeInsets.all(8),
+                                          decoration: BoxDecoration(
+                                            border: Border.all(
+                                              color: Palette.primary,
+                                            ),
+                                            color: row ==
+                                                        _medicine?.position?[
+                                                            'row'] &&
+                                                    col ==
+                                                        _medicine
+                                                            ?.position?['col']
+                                                ? Palette.primary
+                                                : Colors.transparent,
+                                          ),
+                                          child: Center(
+                                            child: Text(
+                                              '${row + 1}, ${col + 1}',
+                                              style:
+                                                  const TextStyle(fontSize: 18),
+                                            ),
+                                          ),
+                                        ),
+                                      );
+                                    },
                                   ),
-                                );
-                              },
-                            ),
+                                ),
+                              ),
+                              _isOpen
+                                  ? Column(
+                                      children: [
+                                        const SizedBox(height: 16),
+                                        const Text("Added Quantity:"),
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            IconButton(
+                                              icon: const Icon(Icons.remove),
+                                              onPressed: _decrementCounter,
+                                            ),
+                                            Text(
+                                              '$_addedQuantity',
+                                              style: const TextStyle(
+                                                  fontSize: 24.0),
+                                            ),
+                                            IconButton(
+                                              icon: const Icon(Icons.add),
+                                              onPressed: _incrementCounter,
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 16),
+                                        CustomButton(
+                                          text: 'Submit',
+                                          onPressed: _submit,
+                                        ),
+                                      ],
+                                    )
+                                  : CustomButton(
+                                      text: 'Open',
+                                      onPressed: _openShelf,
+                                    ),
+                              const SizedBox(height: 32),
+                            ],
                           ),
                         ),
-                        _isOpen
-                            ? Column(
-                                children: [
-                                  const SizedBox(height: 16),
-                                  const Text("Added Quantity:"),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      IconButton(
-                                        icon: const Icon(Icons.remove),
-                                        onPressed: _decrementCounter,
-                                      ),
-                                      Text(
-                                        '$_addedQuantity',
-                                        style: const TextStyle(fontSize: 24.0),
-                                      ),
-                                      IconButton(
-                                        icon: const Icon(Icons.add),
-                                        onPressed: _incrementCounter,
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 16),
-                                  CustomButton(
-                                    text: 'Submit',
-                                    onPressed: _submit,
-                                  ),
-                                ],
-                              )
-                            : CustomButton(
-                                text: 'Open',
-                                onPressed: _openShelf,
-                              ),
-                        const SizedBox(height: 32),
-                      ],
-                    ),
+                  CustomButton(
+                    onPressed: _scanMedicineBarcode,
+                    text: 'Scan Barcode',
                   ),
-            CustomButton(
-              onPressed: _scanBarcode,
-              text: 'Scan Barcode',
-            ),
-            const SizedBox(height: 16),
-          ],
-        ),
+                  const SizedBox(height: 16),
+                ],
+              ),
       ),
     );
   }

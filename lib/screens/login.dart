@@ -19,26 +19,31 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
-  void handleLogin() async {
+  void _handleLogin() async {
     final String email = _emailController.text.trim();
     final String password = _passwordController.text.trim();
 
-    //admin login
-    if (email == 'admin' && password == 'admin') {
-      if (mounted) {
+    final UserProvider userProvider =
+        Provider.of<UserProvider>(context, listen: false);
+
+    // admin login
+    if (!email.contains('@')) {
+      await userProvider.adminLogin(email, password);
+
+      if (userProvider.errorMessage.isNotEmpty && mounted) {
+        showErrorDialog(context, userProvider.errorMessage);
+      } else {
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(
-            builder: (BuildContext context) => const AdminScreen(),
+            builder: (context) => const AdminScreen(),
           ),
           (route) => false,
         );
       }
+
       return;
     }
-
-    final UserProvider userProvider =
-        Provider.of<UserProvider>(context, listen: false);
 
     await userProvider.login(email, password);
 
@@ -79,7 +84,7 @@ class _LoginScreenState extends State<LoginScreen> {
           const SizedBox(height: 32),
           CustomButton(
             text: 'Login',
-            onPressed: handleLogin,
+            onPressed: _handleLogin,
           ),
         ],
       ),
