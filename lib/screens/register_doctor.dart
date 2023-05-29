@@ -42,8 +42,15 @@ class _RegisterDoctorScreenState extends State<RegisterDoctorScreen> {
         (route) => false,
       );
     }
+  }
 
-    // }
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    _licenseNumberController.dispose();
+    super.dispose();
   }
 
   @override
