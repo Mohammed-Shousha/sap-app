@@ -26,7 +26,6 @@ class MedicinesProvider extends ChangeNotifier {
   Future<void> getMedicines() async {
     _isLoading = true;
     _errorMessage = '';
-    notifyListeners();
 
     final result = await client.query(
       QueryOptions(

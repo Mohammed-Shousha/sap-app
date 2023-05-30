@@ -23,14 +23,13 @@ class PrescriptionsProvider extends ChangeNotifier {
   PrescriptionModel? _prescription;
   PrescriptionModel? get prescription => _prescription;
 
-  num get prescriptionTotal => _prescription!.medicines!
+  num? get prescriptionTotal => _prescription?.medicines!
       .map((medicine) => medicine.price)
       .reduce((value, element) => value + element);
 
   Future<void> getUserPrescriptions(String userId) async {
     _isLoading = true;
     _errorMessage = '';
-    notifyListeners();
 
     final result = await client.query(
       QueryOptions(
