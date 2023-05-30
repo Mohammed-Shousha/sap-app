@@ -33,10 +33,10 @@ class _PrescriptionDetailsScreenState extends State<PrescriptionDetailsScreen> {
   @override
   void initState() {
     super.initState();
-    getPrescription(widget.prescriptionId);
+    _loadPrescription(widget.prescriptionId);
   }
 
-  void getPrescription(prescriptionId) async {
+  void _loadPrescription(prescriptionId) async {
     await Provider.of<PrescriptionsProvider>(context, listen: false)
         .getPrescriptionDetails(
       prescriptionId,
@@ -244,7 +244,7 @@ class _PrescriptionDetailsScreenState extends State<PrescriptionDetailsScreen> {
                                     _isProcessing
                                         ? null
                                         : await _completePayment(
-                                            prescriptionTotal,
+                                            prescriptionTotal!,
                                             widget.prescriptionId,
                                           );
                                   },
