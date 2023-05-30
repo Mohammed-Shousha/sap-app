@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
 import 'package:provider/provider.dart';
-import 'package:sap/models/prescription_model.dart';
+import 'package:sap/models/medicine_model.dart';
+import 'package:sap/models/prescription_medicine_model.dart';
 import 'package:sap/models/user_model.dart';
 import 'package:sap/providers/medicines_provider.dart';
 import 'package:sap/providers/prescriptions_provider.dart';
@@ -23,14 +24,11 @@ class _AddPrescriptionFormState extends State<AddPrescriptionForm> {
   final TextEditingController _patientNameController = TextEditingController();
   final TextEditingController _quantityController = TextEditingController();
   final TextEditingController _instructionsController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
+
   String _patientId = '';
-  String? _selectedMedicineId;
-  String? _selectedMedicineName;
-  num? _selectedMedicinePrice;
-
-  final List<Map<String, dynamic>> _medications = [];
-
-  final _scrollController = ScrollController();
+  Medicine? _selectedMedicine;
+  final List<PrescriptionMedicine> _medicines = [];
 
   @override
   void initState() {
@@ -58,116 +56,36 @@ class _AddPrescriptionFormState extends State<AddPrescriptionForm> {
     }
 
     if (mounted) {
-      final UserProvider userProvider =
-          Provider.of<UserProvider>(context, listen: false);
+      User? user;
 
-      UserModel? user = await userProvider.getUser(userQrCode);
+      try {
+        user = await Provider.of<UserProvider>(context, listen: false)
+            .getUser(userQrCode);
+      } catch (e) {
+        showErrorDialog(context, e.toString());
 
-      final errorMessage = userProvider.errorMessage;
-
-      if (errorMessage.isNotEmpty && mounted) {
         setState(() {
           _patientId = '';
           _patientNameController.clear();
         });
-        showErrorDialog(context, errorMessage);
-      } else {
-        setState(() {
-          _patientNameController.text = user!.name;
-          _patientId = user.id;
-        });
       }
+
+      setState(() {
+        _patientNameController.text = user!.name;
+        _patientId = user.id;
+      });
     }
-  }
-
-  void _clearAllFields() {
-    _clearPrescriptionFields();
-    setState(() {
-      _patientId = '';
-      _patientNameController.clear();
-      _medications.clear();
-    });
-  }
-
-  void _clearPrescriptionFields() {
-    setState(() {
-      _selectedMedicineId = null;
-      _quantityController.clear();
-      _instructionsController.clear();
-    });
-  }
-
-  void _addMedication() {
-    final medicineId = _selectedMedicineId;
-    final medicineName = _selectedMedicineName;
-    final quantity = _quantityController.text.trim();
-    final instructions = _instructionsController.text.trim();
-    final price = _selectedMedicinePrice;
-
-    if (medicineId == null ||
-        quantity.isEmpty ||
-        instructions.isEmpty ||
-        _patientId.isEmpty) {
-      showErrorDialog(context, 'Please fill in all fields');
-      return;
-    }
-
-    final selectedMedicine = _medications.firstWhere(
-      (medication) => medication['medicineId'] == medicineId,
-      orElse: () => {},
-    );
-
-    if (_medications.contains(selectedMedicine)) {
-      selectedMedicine['quantity'] =
-          (int.parse(selectedMedicine['quantity']) + int.parse(quantity))
-              .toString();
-      selectedMedicine['instructions'] = instructions;
-
-      _clearPrescriptionFields();
-      return;
-    }
-
-    final newMedication = {
-      'medicineId': medicineId,
-      'medicineName': medicineName,
-      'quantity': quantity,
-      'doctorInstructions': instructions,
-      'price': price,
-    };
-
-    _clearPrescriptionFields();
-
-    setState(() {
-      _medications.add(newMedication);
-    });
-  }
-
-  void _removeMedication(int index) {
-    setState(() {
-      _medications.removeAt(index);
-    });
-  }
-
-  void _scrollToEnd() {
-    _scrollController.animateTo(
-      _scrollController.position.maxScrollExtent +
-          80, // 80 is the height of the card
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeOut,
-    );
   }
 
   void _handleSubmit() async {
-    if (_medications.isEmpty) {
+    if (_medicines.isEmpty) {
       showErrorDialog(context, 'Please add at least one medication');
       return;
     }
 
     final userProvider = Provider.of<UserProvider>(context, listen: false);
     final doctorId = userProvider.user?.id;
-    final medicines = _medications
-        .map((medication) => PrescriptionMedicine.fromJson(medication))
-        .toList();
+    final medicines = _medicines;
 
     final PrescriptionsProvider prescriptionsProvider =
         Provider.of<PrescriptionsProvider>(context, listen: false);
@@ -188,6 +106,81 @@ class _AddPrescriptionFormState extends State<AddPrescriptionForm> {
     }
   }
 
+  void _addMedicine() {
+    final medicineId = _selectedMedicine?.id;
+    final quantity = _quantityController.text.trim();
+    final instructions = _instructionsController.text.trim();
+
+    if (medicineId == null ||
+        quantity.isEmpty ||
+        instructions.isEmpty ||
+        _patientId.isEmpty) {
+      showErrorDialog(context, 'Please fill in all fields');
+      return;
+    }
+
+    PrescriptionMedicine? selectedMedicine;
+    for (var medication in _medicines) {
+      if (medication.id == medicineId) {
+        selectedMedicine = medication;
+        break;
+      }
+    }
+
+    if (selectedMedicine != null) {
+      selectedMedicine.quantity += int.tryParse(quantity) ?? 0;
+      selectedMedicine.doctorInstructions = instructions;
+      _clearPrescriptionFields();
+      return;
+    }
+
+    final newMedication = PrescriptionMedicine(
+      id: medicineId,
+      name: _selectedMedicine!.name,
+      quantity: int.parse(quantity),
+      doctorInstructions: instructions,
+      price: _selectedMedicine!.price!,
+    );
+
+    _clearPrescriptionFields();
+
+    setState(() {
+      _medicines.add(newMedication);
+    });
+  }
+
+  void _removeMedicine(int index) {
+    setState(() {
+      _medicines.removeAt(index);
+    });
+  }
+
+  void _scrollToEnd() {
+    _scrollController.animateTo(
+      _scrollController.position.maxScrollExtent +
+          80, // 80 is the height of the card
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOut,
+    );
+  }
+
+  void _clearAllFields() {
+    _clearPrescriptionFields();
+    setState(() {
+      _patientId = '';
+      _patientNameController.clear();
+      _medicines.clear();
+    });
+  }
+
+  void _clearPrescriptionFields() {
+    setState(() {
+      _selectedMedicine = null;
+      _quantityController.clear();
+      _instructionsController.clear();
+    });
+  }
+
   @override
   void dispose() {
     _patientNameController.dispose();
@@ -199,21 +192,6 @@ class _AddPrescriptionFormState extends State<AddPrescriptionForm> {
 
   @override
   Widget build(BuildContext context) {
-    final medicinesProvider = Provider.of<MedicinesProvider>(context);
-
-    final medicines = medicinesProvider.medicines;
-
-    final medicinesDropdownItems = medicines
-        .map(
-          (medicine) => DropdownMenuItem(
-            value: medicine.id,
-            child: Text(medicine.name),
-          ),
-        )
-        .toList();
-
-    final errorMessage = medicinesProvider.errorMessage;
-
     return GradientScaffold(
       appBar: AppBar(
         title: const Text('Add Prescription'),
@@ -225,9 +203,14 @@ class _AddPrescriptionFormState extends State<AddPrescriptionForm> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              CustomButton(
-                text: 'Scan Patient QR Code',
-                onPressed: _scanUserQrCode,
+              Consumer<UserProvider>(
+                builder: (context, userProvider, _) {
+                  return CustomButton(
+                    text: 'Scan Patient QR Code',
+                    onPressed: _scanUserQrCode,
+                    isLoading: userProvider.isLoading,
+                  );
+                },
               ),
               const SizedBox(height: 16),
               CustomTextField(
@@ -236,35 +219,52 @@ class _AddPrescriptionFormState extends State<AddPrescriptionForm> {
                 enabled: false,
               ),
               const SizedBox(height: 16),
-              DropdownButtonFormField(
-                value: _selectedMedicineId,
-                items: medicinesDropdownItems,
-                onChanged: medicines.isNotEmpty
-                    ? (String? value) {
-                        setState(() {
-                          _selectedMedicineId = value;
-                          final selectedMedicine = medicines
-                              .firstWhere((medicine) => medicine.id == value);
-                          _selectedMedicineName = selectedMedicine.name;
-                          _selectedMedicinePrice = selectedMedicine.price;
-                        });
-                      }
-                    : null,
-                style: const TextStyle(
-                  fontSize: 20.0,
-                  color: Colors.black87,
-                  fontFamily: 'Montserrat',
-                ),
-                decoration: InputDecoration(
-                  labelText: errorMessage.isNotEmpty
-                      ? errorMessage
-                      : medicines.isNotEmpty
-                          ? 'Medicine'
-                          : 'No medicines found',
-                  labelStyle: const TextStyle(
-                    fontSize: 20.0,
-                  ),
-                ),
+              Consumer<MedicinesProvider>(
+                builder: (context, medicinesProvider, _) {
+                  final medicines = medicinesProvider.medicines;
+
+                  final medicinesDropdownItems = medicines
+                      .map(
+                        (medicine) => DropdownMenuItem(
+                          value: medicine,
+                          child: Text(medicine.name),
+                        ),
+                      )
+                      .toList();
+
+                  final isLoading = medicinesProvider.isLoading;
+
+                  final errorMessage = medicinesProvider.errorMessage;
+
+                  return DropdownButtonFormField<Medicine>(
+                    value: _selectedMedicine,
+                    items: medicinesDropdownItems,
+                    onChanged: medicines.isNotEmpty
+                        ? (Medicine? value) {
+                            setState(() {
+                              _selectedMedicine = value;
+                            });
+                          }
+                        : null,
+                    style: const TextStyle(
+                      fontSize: 20.0,
+                      color: Colors.black87,
+                      fontFamily: 'Montserrat',
+                    ),
+                    decoration: InputDecoration(
+                      labelText: isLoading
+                          ? 'Loading...'
+                          : errorMessage.isNotEmpty
+                              ? errorMessage
+                              : medicines.isEmpty
+                                  ? 'No medicines found'
+                                  : 'Medicine',
+                      labelStyle: const TextStyle(
+                        fontSize: 20.0,
+                      ),
+                    ),
+                  );
+                },
               ),
               const SizedBox(height: 16),
               CustomTextField(
@@ -280,30 +280,32 @@ class _AddPrescriptionFormState extends State<AddPrescriptionForm> {
               const SizedBox(height: 16),
               CustomButton(
                 onPressed: () {
-                  _addMedication();
-                  _scrollToEnd();
+                  _addMedicine();
+                  if (_medicines.length > 1) _scrollToEnd();
                 },
                 text: 'Add Medication',
               ),
               const SizedBox(height: 16),
-              if (_medications.isNotEmpty)
+              if (_medicines.isNotEmpty)
                 SizedBox(
-                  height: _medications.length == 1 ? 80.0 : 160.0,
+                  height: _medicines.length == 1 ? 80.0 : 160.0,
                   child: ListView.builder(
                     shrinkWrap: true,
                     padding: const EdgeInsets.only(top: 0),
                     controller: _scrollController,
-                    itemCount: _medications.length,
+                    itemCount: _medicines.length,
                     itemBuilder: (context, index) {
-                      final medication = _medications[index];
+                      final medication = _medicines[index];
                       return Card(
                         child: ListTile(
-                          title: Text(medication['medicineName']),
+                          // title: Text(medication['medicineName']),
+                          title: Text(medication.name),
                           subtitle: Text(
-                              '${medication['quantity']} pack(s)\n${medication['instructions']}'),
+                              // '${medication['quantity']} pack(s)\n${medication['doctorInstructions']}'),
+                              '${medication.quantity} pack(s)\n${medication.doctorInstructions}'),
                           trailing: IconButton(
                             icon: const Icon(Icons.delete),
-                            onPressed: () => _removeMedication(index),
+                            onPressed: () => _removeMedicine(index),
                           ),
                         ),
                       );
@@ -311,9 +313,14 @@ class _AddPrescriptionFormState extends State<AddPrescriptionForm> {
                   ),
                 ),
               const SizedBox(height: 16),
-              CustomButton(
-                text: 'Submit',
-                onPressed: _handleSubmit,
+              Consumer<PrescriptionsProvider>(
+                builder: (context, prescriptionsProvider, _) {
+                  return CustomButton(
+                    text: 'Submit',
+                    onPressed: _handleSubmit,
+                    isLoading: prescriptionsProvider.isLoading,
+                  );
+                },
               ),
             ],
           ),

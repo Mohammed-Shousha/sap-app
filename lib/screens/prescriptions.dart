@@ -58,28 +58,29 @@ class _PrescriptionsScreenState extends State<PrescriptionsScreen> {
                   itemBuilder: (context, index) {
                     final prescription = prescriptions[index];
                     return Consumer<UserProvider>(
-                        builder: (context, userProvider, _) {
-                      return CustomListTile(
-                        titleText: 'Prescription',
-                        subtitleText:
-                            'Date: ${formatDateTime(prescription.date)}\n'
-                            '${userProvider.user!.isDoctor ? 'Patient: ${prescription.patientName}' : 'Doctor: ${prescription.doctorName}'}',
-                        leadingIcon: Icons.medication_outlined,
-                        trailingIcon: Icons.arrow_forward,
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => PrescriptionDetailsScreen(
-                                prescriptionId: prescription.id,
-                                isPatientPrescription:
-                                    !userProvider.user!.isDoctor,
+                      builder: (context, userProvider, _) {
+                        return CustomListTile(
+                          titleText: 'Prescription',
+                          subtitleText:
+                              'Date: ${formatDateTime(prescription.date)}\n'
+                              '${userProvider.user!.isDoctor ? 'Patient: ${prescription.patientName}' : 'Doctor: ${prescription.doctorName}'}',
+                          leadingIcon: Icons.medication_outlined,
+                          trailingIcon: Icons.arrow_forward,
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => PrescriptionDetailsScreen(
+                                  prescriptionId: prescription.id,
+                                  isPatientPrescription:
+                                      !userProvider.user!.isDoctor,
+                                ),
                               ),
-                            ),
-                          );
-                        },
-                      );
-                    });
+                            );
+                          },
+                        );
+                      },
+                    );
                   },
                 ),
     );
