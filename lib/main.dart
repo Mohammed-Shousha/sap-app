@@ -4,7 +4,7 @@ import 'package:sap/providers/medicines_provider.dart';
 import 'package:sap/providers/prescriptions_provider.dart';
 import 'package:sap/screens/welcome.dart';
 import 'package:sap/utils/constants.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sap/utils/shared_preferences_service.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
@@ -15,11 +15,11 @@ import 'package:sap/utils/palette.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await initHiveForFlutter();
-
   await dotenv.load(fileName: "assets/.env");
 
   Stripe.publishableKey = dotenv.env['STRIPE_PUBLISHABLE_KEY']!;
+
+  await initHiveForFlutter();
 
   ValueNotifier<GraphQLClient> client = ValueNotifier(
     GraphQLClient(
@@ -37,8 +37,7 @@ void main() async {
     ),
   );
 
-  SharedPreferences prefs = await SharedPreferences.getInstance();
-  bool isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
+  String userId = await getUserId();
 
   runApp(
     MultiProvider(
@@ -46,7 +45,6 @@ void main() async {
         ChangeNotifierProvider(
           create: (context) => UserProvider(
             client: client.value,
-            prefs: prefs,
           ),
         ),
         ChangeNotifierProvider(
@@ -68,7 +66,7 @@ void main() async {
           fontFamily: 'Montserrat',
           visualDensity: VisualDensity.adaptivePlatformDensity,
         ),
-        home: isLoggedIn ? const HomeScreen() : const WelcomeScreen(),
+        home: userId.isNotEmpty ? const HomeScreen() : const WelcomeScreen(),
       ),
     ),
   );

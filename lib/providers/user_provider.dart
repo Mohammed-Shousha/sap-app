@@ -1,17 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sap/models/user_model.dart';
 import 'package:sap/utils/graphql_mutations.dart';
 import 'package:sap/utils/graphql_queries.dart';
+import 'package:sap/utils/shared_preferences_service.dart';
 
 class UserProvider extends ChangeNotifier {
   final GraphQLClient client;
-  final SharedPreferences prefs;
 
   UserProvider({
     required this.client,
-    required this.prefs,
   });
 
   UserModel? _user;
@@ -24,29 +22,37 @@ class UserProvider extends ChangeNotifier {
   String get errorMessage => _errorMessage;
 
   Future<void> init() async {
-    bool isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
+    _isLoading = true;
+    _errorMessage = '';
 
-    if (isLoggedIn) {
-      String id = prefs.getString('userId') ?? '';
+    String userId = await getUserId();
 
-      _isLoading = true;
-      _errorMessage = '';
-
-      UserModel user;
-
-      try {
-        user = await _getUserById(id);
-      } catch (e) {
-        _isLoading = false;
-        _errorMessage = e.toString();
-        return;
-      }
-
+    if (userId.isEmpty) {
       _isLoading = false;
-      _user = user;
-
-      notifyListeners();
+      _errorMessage = 'User not found';
+      return;
     }
+
+    if (userId == 'admin') {
+      await adminLogin('admin', 'admin');
+      _isLoading = false;
+      return;
+    }
+
+    UserModel user;
+
+    try {
+      user = await _getUserById(userId);
+    } catch (e) {
+      _isLoading = false;
+      _errorMessage = e.toString();
+      return;
+    }
+
+    _isLoading = false;
+    _user = user;
+
+    notifyListeners();
   }
 
   Future<void> login(String email, String password) async {
@@ -71,7 +77,7 @@ class UserProvider extends ChangeNotifier {
     } else {
       _isLoading = false;
       _user = UserModel.fromJson(result.data!['login']);
-      await _setUserId(_user!.id);
+      await setUserId(_user!.id);
     }
 
     notifyListeners();
@@ -104,7 +110,7 @@ class UserProvider extends ChangeNotifier {
     } else {
       _isLoading = false;
       _user = UserModel.fromJson(result.data!['registerUser']);
-      await _setUserId(_user!.id);
+      await setUserId(_user!.id);
     }
 
     notifyListeners();
@@ -138,7 +144,7 @@ class UserProvider extends ChangeNotifier {
     } else {
       _isLoading = false;
       _user = UserModel.fromJson(result.data!['registerDoctor']);
-      await _setUserId(_user!.id);
+      await setUserId(_user!.id);
     }
 
     notifyListeners();
@@ -156,6 +162,7 @@ class UserProvider extends ChangeNotifier {
         email: email,
         isDoctor: false,
       );
+      setUserId('admin');
     } else {
       _errorMessage = 'Invalid credentials';
     }
@@ -167,7 +174,7 @@ class UserProvider extends ChangeNotifier {
   void logout() async {
     _user = null;
 
-    await _removeUserId();
+    await removeUserId();
 
     notifyListeners();
   }
@@ -190,17 +197,6 @@ class UserProvider extends ChangeNotifier {
 
     notifyListeners();
     return user;
-  }
-
-  Future<void> _setUserId(String userId) async {
-    await prefs.setBool('isLoggedIn', true);
-    await prefs.setString('userId', userId);
-    return;
-  }
-
-  Future<void> _removeUserId() async {
-    await prefs.setBool('isLoggedIn', false);
-    await prefs.remove('userId');
   }
 
   Future<UserModel> _getUserById(String id) async {

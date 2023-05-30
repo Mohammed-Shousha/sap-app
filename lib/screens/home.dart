@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sap/screens/admin.dart';
 import 'package:sap/screens/home_doctor.dart';
 import 'package:sap/screens/home_user.dart';
 import 'package:provider/provider.dart';
@@ -16,12 +17,12 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
-    final userProvider = Provider.of<UserProvider>(
-      context,
-      listen: false,
-    );
     super.initState();
-    userProvider.init();
+    _loadUser();
+  }
+
+  void _loadUser() async {
+    await Provider.of<UserProvider>(context, listen: false).init();
   }
 
   @override
@@ -40,7 +41,7 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     }
 
-    if (errorMessage.isNotEmpty) {
+    if (errorMessage.isNotEmpty || user == null) {
       return GradientScaffold(
         body: Center(
           child: ErrorText(text: errorMessage),
@@ -48,10 +49,14 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     }
 
-    if (user!.isDoctor) {
-      return const DoctorHomeScreen();
-    } else {
-      return const UserHomeScreen();
+    if (user.id == 'admin') {
+      return const AdminScreen();
     }
+
+    if (user.isDoctor) {
+      return const DoctorHomeScreen();
+    }
+
+    return const UserHomeScreen();
   }
 }
