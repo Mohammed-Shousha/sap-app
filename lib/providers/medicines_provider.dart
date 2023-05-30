@@ -17,11 +17,11 @@ class MedicinesProvider extends ChangeNotifier {
   String _errorMessage = '';
   String get errorMessage => _errorMessage;
 
-  List<MedicineModel> _medicines = [];
-  List<MedicineModel> get medicines => _medicines;
+  List<Medicine> _medicines = [];
+  List<Medicine> get medicines => _medicines;
 
-  MedicineModel? _medicine;
-  MedicineModel? get medicine => _medicine;
+  Medicine? _medicine;
+  Medicine? get medicine => _medicine;
 
   Future<void> getMedicines() async {
     _isLoading = true;
@@ -39,8 +39,8 @@ class MedicinesProvider extends ChangeNotifier {
     if (result.hasException) {
       _errorMessage = 'Error fetching medicines';
     } else {
-      final List<MedicineModel> medicines = (result.data?['medicines'] as List)
-          .map((e) => MedicineModel.fromJson(e))
+      final List<Medicine> medicines = (result.data?['medicines'] as List)
+          .map((e) => Medicine.fromJson(e))
           .toList();
 
       _medicines = medicines;
@@ -70,8 +70,7 @@ class MedicinesProvider extends ChangeNotifier {
     if (result.hasException) {
       _errorMessage = result.exception!.graphqlErrors.first.message;
     } else {
-      final MedicineModel medicine =
-          MedicineModel.fromJson(result.data!['medicineById']);
+      final Medicine medicine = Medicine.fromJson(result.data!['medicineById']);
 
       _medicine = medicine;
     }

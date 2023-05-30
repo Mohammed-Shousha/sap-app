@@ -1,11 +1,11 @@
-class MedicineModel {
+class Medicine {
   final String id;
   final String name;
   final num? price;
   final int? availableQuantity;
   final Map<String, dynamic>? position;
 
-  MedicineModel({
+  Medicine({
     required this.id,
     required this.name,
     this.price,
@@ -13,8 +13,8 @@ class MedicineModel {
     this.position,
   });
 
-  factory MedicineModel.fromJson(Map<String, dynamic> json) {
-    return MedicineModel(
+  factory Medicine.fromJson(Map<String, dynamic> json) {
+    return Medicine(
       id: json['_id'],
       name: json['name'],
       price: json['price'],

@@ -12,8 +12,8 @@ class UserProvider extends ChangeNotifier {
     required this.client,
   });
 
-  UserModel? _user;
-  UserModel? get user => _user;
+  User? _user;
+  User? get user => _user;
 
   bool _isLoading = false;
   bool get isLoading => _isLoading;
@@ -39,7 +39,7 @@ class UserProvider extends ChangeNotifier {
       return;
     }
 
-    UserModel user;
+    User user;
 
     try {
       user = await _getUserById(userId);
@@ -76,7 +76,7 @@ class UserProvider extends ChangeNotifier {
       _errorMessage = result.exception!.graphqlErrors.first.message;
     } else {
       _isLoading = false;
-      _user = UserModel.fromJson(result.data!['login']);
+      _user = User.fromJson(result.data!['login']);
       await setUserId(_user!.id);
     }
 
@@ -109,7 +109,7 @@ class UserProvider extends ChangeNotifier {
       _errorMessage = result.exception!.graphqlErrors.first.message;
     } else {
       _isLoading = false;
-      _user = UserModel.fromJson(result.data!['registerUser']);
+      _user = User.fromJson(result.data!['registerUser']);
       await setUserId(_user!.id);
     }
 
@@ -143,7 +143,7 @@ class UserProvider extends ChangeNotifier {
       _errorMessage = result.exception!.graphqlErrors.first.message;
     } else {
       _isLoading = false;
-      _user = UserModel.fromJson(result.data!['registerDoctor']);
+      _user = User.fromJson(result.data!['registerDoctor']);
       await setUserId(_user!.id);
     }
 
@@ -156,7 +156,7 @@ class UserProvider extends ChangeNotifier {
     notifyListeners();
 
     if (email == 'admin' && password == 'admin') {
-      _user = UserModel(
+      _user = User(
         id: 'admin',
         name: 'admin',
         email: email,
@@ -179,27 +179,29 @@ class UserProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<UserModel?> getUser(String id) async {
+  Future<User?> getUser(String id) async {
     _isLoading = true;
     _errorMessage = '';
     notifyListeners();
 
-    UserModel? user;
+    User? user;
 
     try {
       user = await _getUserById(id);
+
+      _isLoading = false;
+      notifyListeners();
+
+      return user;
     } catch (e) {
-      _errorMessage = e.toString();
-      user = null;
+      _isLoading = false;
+      notifyListeners();
+
+      rethrow;
     }
-
-    _isLoading = false;
-
-    notifyListeners();
-    return user;
   }
 
-  Future<UserModel> _getUserById(String id) async {
+  Future<User> _getUserById(String id) async {
     final result = await client.query(
       QueryOptions(
         document: gql(
@@ -214,7 +216,7 @@ class UserProvider extends ChangeNotifier {
     if (result.hasException) {
       throw result.exception!.graphqlErrors.first.message;
     } else {
-      return UserModel.fromJson(result.data!['user']);
+      return User.fromJson(result.data!['user']);
     }
   }
 }

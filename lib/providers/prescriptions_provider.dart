@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
+import 'package:sap/models/prescription_medicine_model.dart';
 import 'package:sap/models/prescription_model.dart';
 import 'package:sap/utils/graphql_mutations.dart';
 import 'package:sap/utils/graphql_queries.dart';
@@ -17,11 +18,11 @@ class PrescriptionsProvider extends ChangeNotifier {
   String _errorMessage = '';
   String get errorMessage => _errorMessage;
 
-  List<PrescriptionModel> _prescriptions = [];
-  List<PrescriptionModel> get prescriptions => _prescriptions;
+  List<Prescription> _prescriptions = [];
+  List<Prescription> get prescriptions => _prescriptions;
 
-  PrescriptionModel? _prescription;
-  PrescriptionModel? get prescription => _prescription;
+  Prescription? _prescription;
+  Prescription? get prescription => _prescription;
 
   num? get prescriptionTotal => _prescription?.medicines!
       .map((medicine) => medicine.price)
@@ -49,7 +50,7 @@ class PrescriptionsProvider extends ChangeNotifier {
     } else {
       _isLoading = false;
       _prescriptions = (result.data!['prescriptionsByUser'] as List)
-          .map((prescription) => PrescriptionModel.fromJson(prescription))
+          .map((prescription) => Prescription.fromJson(prescription))
           .toList();
     }
 
@@ -77,8 +78,7 @@ class PrescriptionsProvider extends ChangeNotifier {
       _errorMessage = 'Error fetching prescription details';
     } else {
       _isLoading = false;
-      _prescription =
-          PrescriptionModel.fromJson(result.data!['prescriptionById']);
+      _prescription = Prescription.fromJson(result.data!['prescriptionById']);
     }
 
     notifyListeners();
