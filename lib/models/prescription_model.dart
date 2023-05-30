@@ -1,4 +1,6 @@
-class PrescriptionModel {
+import 'package:sap/models/prescription_medicine_model.dart';
+
+class Prescription {
   final String id;
   final String doctorName;
   final String patientName;
@@ -7,7 +9,7 @@ class PrescriptionModel {
   final bool? isReceived;
   final List<PrescriptionMedicine>? medicines;
 
-  PrescriptionModel({
+  Prescription({
     required this.id,
     required this.doctorName,
     required this.patientName,
@@ -17,8 +19,8 @@ class PrescriptionModel {
     this.medicines,
   });
 
-  factory PrescriptionModel.fromJson(Map<String, dynamic> json) {
-    return PrescriptionModel(
+  factory Prescription.fromJson(Map<String, dynamic> json) {
+    return Prescription(
       id: json['_id'],
       doctorName: json['doctorName'],
       patientName: json['patientName'],
@@ -35,41 +37,5 @@ class PrescriptionModel {
               ))
           .toList(),
     );
-  }
-}
-
-class PrescriptionMedicine {
-  final String id;
-  final String name;
-  final int quantity;
-  final num price;
-  final String doctorInstructions;
-
-  PrescriptionMedicine({
-    required this.id,
-    required this.name,
-    required this.price,
-    required this.quantity,
-    required this.doctorInstructions,
-  });
-
-  factory PrescriptionMedicine.fromJson(Map<String, dynamic> json) {
-    return PrescriptionMedicine(
-      id: json['medicineId'],
-      name: json['medicineName'],
-      price: json['price'],
-      quantity: int.parse(json['quantity']),
-      doctorInstructions: json['doctorInstructions'],
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'medicineId': id,
-      'medicineName': name,
-      'price': price,
-      'quantity': quantity,
-      'doctorInstructions': doctorInstructions,
-    };
   }
 }
