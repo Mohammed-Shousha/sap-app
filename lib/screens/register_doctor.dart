@@ -86,10 +86,13 @@ class _RegisterDoctorScreenState extends State<RegisterDoctorScreen> {
             textInputAction: TextInputAction.done,
           ),
           const SizedBox(height: 32),
-          CustomButton(
-            text: 'Register',
-            onPressed: _handleRegisterDoctor,
-          ),
+          Consumer<UserProvider>(builder: (context, userProvider, _) {
+            return CustomButton(
+              text: 'Register',
+              onPressed: _handleRegisterDoctor,
+              isLoading: userProvider.isLoading,
+            );
+          }),
         ],
       ),
     );

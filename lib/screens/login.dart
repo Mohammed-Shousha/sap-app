@@ -89,9 +89,14 @@ class _LoginScreenState extends State<LoginScreen> {
             textInputAction: TextInputAction.done,
           ),
           const SizedBox(height: 32),
-          CustomButton(
-            text: 'Login',
-            onPressed: _handleLogin,
+          Consumer<UserProvider>(
+            builder: (context, userProvider, _) {
+              return CustomButton(
+                text: 'Login',
+                onPressed: _handleLogin,
+                isLoading: userProvider.isLoading,
+              );
+            },
           ),
         ],
       ),

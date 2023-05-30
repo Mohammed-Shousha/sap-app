@@ -77,9 +77,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
             textInputAction: TextInputAction.done,
           ),
           const SizedBox(height: 32),
-          CustomButton(
-            text: 'Register',
-            onPressed: _handleRegister,
+          Consumer<UserProvider>(
+            builder: (context, userProvider, _) {
+              return CustomButton(
+                text: 'Register',
+                onPressed: _handleRegister,
+                isLoading: userProvider.isLoading,
+              );
+            },
           ),
         ],
       ),

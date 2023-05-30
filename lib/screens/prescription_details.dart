@@ -248,6 +248,7 @@ class _PrescriptionDetailsScreenState extends State<PrescriptionDetailsScreen> {
                                             widget.prescriptionId,
                                           );
                                   },
+                                  isLoading: _isProcessing,
                                 ),
                                 const SizedBox(height: 16),
                               ],
