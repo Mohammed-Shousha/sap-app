@@ -37,7 +37,7 @@ class _AdminScreenState extends State<AdminScreen> {
       '#3BBDB1',
       'Cancel',
       true,
-      ScanMode.QR,
+      ScanMode.BARCODE,
     );
 
     if (medicineBarcode == '-1') {
@@ -189,7 +189,7 @@ class _AdminScreenState extends State<AdminScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             _medicine == null
-                ? const SizedBox.shrink()
+                ? const SizedBox()
                 : Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.center,
@@ -231,14 +231,7 @@ class _AdminScreenState extends State<AdminScreen> {
                                           ? Palette.primary
                                           : Colors.transparent,
                                     ),
-                                    child: Center(
-                                      child: Text(
-                                        '${row + 1}, ${col + 1}',
-                                        style: const TextStyle(
-                                          fontSize: 18,
-                                        ),
-                                      ),
-                                    ),
+                                    child: const SizedBox(),
                                   ),
                                 );
                               },

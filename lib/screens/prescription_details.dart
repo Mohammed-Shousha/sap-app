@@ -27,7 +27,6 @@ class PrescriptionDetailsScreen extends StatefulWidget {
 }
 
 class _PrescriptionDetailsScreenState extends State<PrescriptionDetailsScreen> {
-  bool _paymentCompleted = false;
   bool _isProcessing = false;
 
   @override
@@ -65,10 +64,16 @@ class _PrescriptionDetailsScreenState extends State<PrescriptionDetailsScreen> {
 
     if (ispaymentCompleted) {
       if (mounted) showSuccessDialog(context, 'Payment completed!');
-      setState(() {
-        _paymentCompleted = true;
-      });
+
+      _loadPrescription(widget.prescriptionId);
     }
+  }
+
+  void _handlePayment(prescriptionTotal) async {
+    await _completePayment(
+      prescriptionTotal,
+      widget.prescriptionId,
+    );
   }
 
   @override
@@ -87,25 +92,23 @@ class _PrescriptionDetailsScreenState extends State<PrescriptionDetailsScreen> {
       appBar: AppBar(
         title: const Text('Prescription Details'),
         actions: [
-          widget.isPatientPrescription && !isLoading && !errorMessage.isNotEmpty
+          widget.isPatientPrescription &&
+                  !prescription!.isReceived! &&
+                  !isLoading &&
+                  errorMessage.isEmpty
               ? IconButton(
                   icon: const Icon(
                     Icons.qr_code,
                   ),
                   onPressed: () {
-                    prescription!.isReceived!
-                        ? showErrorDialog(
-                            context,
-                            'You already received this prescription',
-                          )
-                        : Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => QRCodeScreen(
-                                id: widget.prescriptionId,
-                              ),
-                            ),
-                          );
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => QRCodeScreen(
+                          id: widget.prescriptionId,
+                        ),
+                      ),
+                    );
                   },
                 )
               : const SizedBox(),
@@ -156,7 +159,7 @@ class _PrescriptionDetailsScreenState extends State<PrescriptionDetailsScreen> {
                       const SizedBox(height: 8),
                       widget.isPatientPrescription
                           ? Text(
-                              'Paid: ${prescription.isPaid! || _paymentCompleted ? 'Yes' : 'No'}',
+                              'Paid: ${prescription.isPaid! ? 'Yes' : 'No'}',
                               style: const TextStyle(fontSize: 16),
                             )
                           : const SizedBox(),
@@ -183,7 +186,7 @@ class _PrescriptionDetailsScreenState extends State<PrescriptionDetailsScreen> {
                             shadowColor: Palette.primary,
                             elevation: 2,
                             child: Padding(
-                              padding: const EdgeInsets.all(8.0),
+                              padding: const EdgeInsets.all(8),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
@@ -210,7 +213,7 @@ class _PrescriptionDetailsScreenState extends State<PrescriptionDetailsScreen> {
                                       ),
                                       widget.isPatientPrescription
                                           ? Text(
-                                              '${medicine.price} EGP',
+                                              '${medicine.price * medicine.quantity} EGP',
                                               style:
                                                   const TextStyle(fontSize: 16),
                                             )
@@ -224,9 +227,7 @@ class _PrescriptionDetailsScreenState extends State<PrescriptionDetailsScreen> {
                         },
                       ),
                       const SizedBox(height: 24),
-                      widget.isPatientPrescription &&
-                              !_paymentCompleted &&
-                              !prescription.isPaid!
+                      widget.isPatientPrescription && !prescription.isPaid!
                           ? Column(
                               crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
@@ -240,13 +241,8 @@ class _PrescriptionDetailsScreenState extends State<PrescriptionDetailsScreen> {
                                 const SizedBox(height: 16),
                                 CustomButton(
                                   text: "Pay",
-                                  onPressed: () async {
-                                    _isProcessing
-                                        ? null
-                                        : await _completePayment(
-                                            prescriptionTotal!,
-                                            widget.prescriptionId,
-                                          );
+                                  onPressed: () {
+                                    _handlePayment(prescriptionTotal);
                                   },
                                   isLoading: _isProcessing,
                                 ),

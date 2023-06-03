@@ -21,10 +21,10 @@ class AddPrescriptionForm extends StatefulWidget {
 }
 
 class _AddPrescriptionFormState extends State<AddPrescriptionForm> {
-  final TextEditingController _patientNameController = TextEditingController();
-  final TextEditingController _quantityController = TextEditingController();
-  final TextEditingController _instructionsController = TextEditingController();
-  final ScrollController _scrollController = ScrollController();
+  final _patientNameController = TextEditingController();
+  final _quantityController = TextEditingController();
+  final _instructionsController = TextEditingController();
+  final _scrollController = ScrollController();
 
   String _patientId = '';
   Medicine? _selectedMedicine;
@@ -298,10 +298,8 @@ class _AddPrescriptionFormState extends State<AddPrescriptionForm> {
                       final medication = _medicines[index];
                       return Card(
                         child: ListTile(
-                          // title: Text(medication['medicineName']),
                           title: Text(medication.name),
                           subtitle: Text(
-                              // '${medication['quantity']} pack(s)\n${medication['doctorInstructions']}'),
                               '${medication.quantity} pack(s)\n${medication.doctorInstructions}'),
                           trailing: IconButton(
                             icon: const Icon(Icons.delete),
