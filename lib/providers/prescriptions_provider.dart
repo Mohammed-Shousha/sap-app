@@ -25,7 +25,7 @@ class PrescriptionsProvider extends ChangeNotifier {
   Prescription? get prescription => _prescription;
 
   num? get prescriptionTotal => _prescription?.medicines!
-      .map((medicine) => medicine.price)
+      .map((medicine) => medicine.price * medicine.quantity)
       .reduce((value, element) => value + element);
 
   Future<void> getUserPrescriptions(String userId) async {
