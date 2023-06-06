@@ -54,7 +54,7 @@ Future<bool> makePayment(num amount, String prescriptionId) async {
 Future<Map<String, dynamic>> createPaymentIntent(num amount) async {
   try {
     var response = await http.post(
-      Uri.parse('${Constants.baseUrl}/payment-sheet'),
+      Uri.parse(Constants.paymentSheetUrl),
       headers: {
         'Content-Type': 'application/json',
       },
@@ -72,7 +72,7 @@ Future<void> displayPaymentSheet(String prescriptionId) async {
   try {
     await Stripe.instance.presentPaymentSheet().then((value) async {
       var response = await http.put(
-        Uri.parse('${Constants.baseUrl}/mark-prescription-paid'),
+        Uri.parse(Constants.markPrescriptionPaidUrl),
         headers: {
           'Content-Type': 'application/json',
         },

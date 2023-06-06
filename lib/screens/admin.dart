@@ -110,8 +110,7 @@ class _AdminScreenState extends State<AdminScreen> {
 
   Future<bool> _shelfAction(ShelfAction action) async {
     final response = await http.post(
-      Uri.parse(
-          '${Constants.piServerUrl}/shelf-action/${action.toString().split('.').last}'),
+      Uri.parse(Constants.shelfActionUrl(action)),
       body: json.encode({
         'row': _medicine!.position!['row'],
         'col': _medicine!.position!['col'],

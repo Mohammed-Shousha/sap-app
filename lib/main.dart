@@ -24,7 +24,7 @@ void main() async {
   ValueNotifier<GraphQLClient> client = ValueNotifier(
     GraphQLClient(
       link: HttpLink(
-        '${Constants.baseUrl}/graphql',
+        Constants.graphqlUrl,
       ),
       cache: GraphQLCache(
         store: HiveStore(),

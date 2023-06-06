@@ -1,8 +1,17 @@
 class Constants {
   static const String baseUrl = "https://sap-backend-production.up.railway.app";
-  // static const String baseUrl = "http://192.168.1.18:4040";
 
-  static const String piServerUrl = 'http://192.168.1.8:8000';
+  static const String piServerUrl = 'http://192.168.2.8:8000';
+
+  static const String graphqlUrl = '$baseUrl/graphql';
+
+  static const String paymentSheetUrl = '$baseUrl/payment-sheet';
+
+  static const String markPrescriptionPaidUrl =
+      '$baseUrl/mark-prescription-paid';
+
+  static String shelfActionUrl(action) =>
+      '$piServerUrl/shelf-action/${action.toString().split('.').last}';
 
   static const rowCount = 5;
 
