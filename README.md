@@ -33,3 +33,9 @@ The SAP (Smart Automatic Pharmacy) App is a Flutter application designed to faci
 - **graphql_flutter**: The graphql_flutter package is used to communicate with a GraphQL API. It facilitates the retrieval and manipulation of data related to prescriptions, patients, and doctors.
 
 - **http**: The http package is used for making HTTP requests to the backend API. It enables communication between the SAP App and the server for various functionalities, such as adding medicines and handling payment process.
+
+## Video Demo
+
+https://github.com/Mohammed-Shousha/sap-app/assets/65350067/3884346d-7bfc-4dca-8224-e791be2a5b01
+
+
