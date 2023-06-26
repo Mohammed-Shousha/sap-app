@@ -36,6 +36,5 @@ The SAP (Smart Automatic Pharmacy) App is a Flutter application designed to faci
 
 ## Video Demo
 
-https://github.com/Mohammed-Shousha/sap-app/assets/65350067/3884346d-7bfc-4dca-8224-e791be2a5b01
-
+https://github.com/Mohammed-Shousha/sap-app/assets/65350067/b1e856d4-3939-481a-b166-81332befa491
 
